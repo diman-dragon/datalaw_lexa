@@ -17,7 +17,7 @@
     "check": "npm run typecheck && npm test && npm run test:data",
     "data:sample": "python3 scripts/build_data.py --sample",
     "data:build": "python3 scripts/build_data.py --download --require-wordfreq",
-    "assets": "capacitor-assets generate --android --iconBackgroundColor \"#8A4B1F\" --iconBackgroundColorDark \"#8A4B1F\" --splashBackgroundColor \"#E9DBC6\" --splashBackgroundColorDark \"#000000\"",
+    "assets": "python3 scripts/android_icons.py",
     "cap:add": "cap add android",
     "cap:sync": "npm run build && cap sync android",
     "android:open": "npm run cap:sync && cap open android",
@@ -38,7 +38,6 @@
     "preact": "^10.26.0"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.0.0",
     "@preact/preset-vite": "^2.10.0",
     "@types/node": "^22.0.0",

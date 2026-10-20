@@ -38,7 +38,7 @@ Android ставит APK «поверх» только если **подпись
 
 ## Быстрый старт
 
-Node 22+, Python 3.10+, JDK 21, Android SDK.
+Node 22+, Python 3.10+ (+ `pip install pillow` для иконок), JDK 21, Android SDK.
 
 ```bash
 npm install
