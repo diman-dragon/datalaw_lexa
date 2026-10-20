@@ -37,6 +37,8 @@ jobs:
 
   data:
     name: Build offline dictionary
+    # тяжёлая сборка — не для pull request'ов (в них только проверка типов и тестов)
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -65,6 +67,7 @@ jobs:
 
   android:
     name: Signed APK
+    if: github.event_name != 'pull_request'
     needs: [check, data]
     runs-on: ubuntu-latest
     timeout-minutes: 45

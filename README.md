@@ -53,7 +53,7 @@ npm run android:open     # открыть в Android Studio
 
 ## GitHub Actions
 
-`.github/workflows/android.yml`: `check` (типы, тесты) → `data` (сборка словаря, кэшируется по хэшу скрипта) → `android` (подписанный APK-артефакт `datalaw_lexa-apk`; по тегу `v*` — ещё и GitHub Release). Для публикации релиза включите *Settings → Actions → Workflow permissions → Read and write*. Рекомендуется закоммитить `package-lock.json` и папку `android/` (`npm run cap:add`).
+`.github/workflows/android.yml`: `check` (типы, тесты; единственное, что идёт на pull request) → `data` (сборка словаря, кэшируется по хэшу скрипта) → `android` (подписанный APK-артефакт `datalaw_lexa-apk`; по тегу `v*` — ещё и GitHub Release). Для публикации релиза включите *Settings → Actions → Workflow permissions → Read and write*. Рекомендуется закоммитить `package-lock.json` и папку `android/` (`npm run cap:add`).
 
 ## Интерфейс
 
