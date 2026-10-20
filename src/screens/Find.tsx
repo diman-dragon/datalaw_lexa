@@ -1,12 +1,13 @@
 import { Header } from '../components/Header.tsx';
 import { Icon } from '../components/Icon.tsx';
-import { EmptyState, Skeleton } from '../components/ui.tsx';
+import { EmptyState, ErrorBox, Skeleton } from '../components/ui.tsx';
 import { useResource } from '../hooks.ts';
 import { t } from '../i18n.ts';
 import { getEntry, getReverse } from '../lib/data.ts';
 import { firstDefinition } from '../lib/entry.ts';
 import { normalizeRu } from '../lib/text.ts';
-import { openWord } from '../router.ts';
+import { DataUnavailableError } from '../lib/source.ts';
+import { navigate, openWord } from '../router.ts';
 
 function Row({ word }: { word: string }) {
   const res = useResource(`entry:${word}`, () => getEntry(word));
@@ -36,6 +37,13 @@ export function FindScreen({ query }: { query: string }) {
     <>
       <Header back title={t('findTitle', { q: query })} />
       {res.status === 'loading' ? <Skeleton lines={4} /> : null}
+      {res.status === 'error' ? (
+        <ErrorBox
+          offline={res.error instanceof DataUnavailableError}
+          onRetry={res.reload}
+          onSettings={() => navigate({ name: 'settings' })}
+        />
+      ) : null}
       {res.status === 'ready' && words.length === 0 ? <EmptyState icon="search" text={t('findEmpty')} /> : null}
       {words.length > 0 ? (
         <>

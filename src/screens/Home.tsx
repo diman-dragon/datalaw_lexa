@@ -1,16 +1,18 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { Icon, LogoMark } from '../components/Icon.tsx';
-import { Chip, EmptyState, Skeleton } from '../components/ui.tsx';
+import { Chip, ErrorBox, Skeleton } from '../components/ui.tsx';
 import { useDebounced, useResource } from '../hooks.ts';
 import { t } from '../i18n.ts';
-import { getEntry, loadEnIndex, loadMeta, loadRuIndex } from '../lib/data.ts';
+import { getEntry, loadEnIndex, loadRuIndex } from '../lib/data.ts';
+import { packInfo } from '../lib/pack.ts';
+import { DataUnavailableError } from '../lib/source.ts';
 import { WORDS_OF_THE_DAY, firstDefinition, ipaFor, topTranslations, wordOfTheDay } from '../lib/entry.ts';
 import { indexOfWord, prefixSearch } from '../lib/search.ts';
 import type { Hit } from '../lib/search.ts';
 import { detectScript, normalizeEn, normalizeRu } from '../lib/text.ts';
 import { tap } from '../native.ts';
 import { navigate, openWord } from '../router.ts';
-import { history, settings, useStore } from '../store.ts';
+import { history, settings, updateSettings, useStore } from '../store.ts';
 
 function WordOfTheDay() {
   const s = useStore(settings);
@@ -69,7 +71,6 @@ export function HomeScreen() {
   const key = script === 'cyrillic' ? normalizeRu(q) : normalizeEn(q);
   const debounced = useDebounced(key, 60);
 
-  const meta = useResource('meta', loadMeta);
   const enIx = useResource('index:en', loadEnIndex);
   const ruIx = useResource('index:ru', loadRuIndex);
 
@@ -99,7 +100,16 @@ export function HomeScreen() {
     }
   };
 
-  const noData = meta.status === 'ready' && !meta.data;
+  const failed = enIx.status === 'error' ? enIx : ruIx.status === 'error' ? ruIx : null;
+  const retry = () => {
+    if (enIx.status === 'error') enIx.reload();
+    if (ruIx.status === 'error') ruIx.reload();
+  };
+  const hintOn = useStore(settings).offlineHint;
+  const [packed, setPacked] = useState(true);
+  useEffect(() => {
+    void packInfo().then((i) => setPacked(i.installed));
+  }, []);
 
   return (
     <>
@@ -153,10 +163,30 @@ export function HomeScreen() {
         ) : null}
       </section>
 
-      {noData ? <EmptyState icon="search" title={t('dataMissingTitle')} text={t('dataMissingBody')} /> : null}
+      {failed ? (
+        <ErrorBox
+          offline={failed.error instanceof DataUnavailableError}
+          onRetry={retry}
+          onSettings={() => navigate({ name: 'settings' })}
+        />
+      ) : null}
 
-      {q.length === 0 && !noData ? (
+      {q.length === 0 && !failed ? (
         <>
+          {!packed && hintOn ? (
+            <section class="card hint">
+              <h2>{t('offlineHintTitle')}</h2>
+              <p>{t('offlineHintBody')}</p>
+              <div class="actions">
+                <button type="button" class="btn btn--primary" onClick={() => navigate({ name: 'settings' })}>
+                  {t('offlineHintAction')}
+                </button>
+                <button type="button" class="btn btn--text" onClick={() => updateSettings({ offlineHint: false })}>
+                  {t('offlineHintDismiss')}
+                </button>
+              </div>
+            </section>
+          ) : null}
           <WordOfTheDay />
 
           {hist.length > 0 ? (

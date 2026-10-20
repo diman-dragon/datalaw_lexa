@@ -1,11 +1,21 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { defineConfig } from 'vite';
+import type { Plugin } from 'vite';
 import preact from '@preact/preset-vite';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
+/** Словарь живёт на GitHub Pages и скачивается из приложения — в APK его не кладём. */
+const noBundledData = (): Plugin => ({
+  name: 'no-bundled-data',
+  apply: 'build',
+  closeBundle() {
+    rmSync(new URL('./dist/data', import.meta.url), { recursive: true, force: true });
+  },
+});
+
 export default defineConfig({
-  plugins: [preact()],
+  plugins: [preact(), noBundledData()],
   // Относительные пути: приложение грузится из https://localhost внутри WebView
   base: './',
   build: {

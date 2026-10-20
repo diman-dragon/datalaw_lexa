@@ -36,11 +36,21 @@ jobs:
         run: npm run check
 
   data:
-    name: Build offline dictionary
-    # тяжёлая сборка — не для pull request'ов (в них только проверка типов и тестов)
+    name: Build dictionary and publish to Pages
+    # тяжёлая сборка — не для pull request'ов
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -57,13 +67,17 @@ jobs:
         run: |
           pip install wordfreq
           python3 scripts/build_data.py --download --require-wordfreq
-      - name: Upload dictionary
-        uses: actions/upload-artifact@v4
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -r public/data site/data
+          touch site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
         with:
-          name: dictionary
-          path: public/data
-          retention-days: 7
-          if-no-files-found: error
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
 
   android:
     name: Signed APK
@@ -86,11 +100,11 @@ jobs:
           python-version: '3.12'
       - name: Pillow (иконки и заставка)
         run: pip install pillow
-      - name: Download dictionary
-        uses: actions/download-artifact@v4
-        with:
-          name: dictionary
-          path: public/data
+      - name: Dictionary URL (GitHub Pages of this repository)
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          echo "VITE_DATA_URL=https://${owner}.github.io/${repo}/data/" >> "$GITHUB_ENV"
       - name: Install
         run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - name: Build, sign (persistent key) and align APK

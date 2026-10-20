@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { t } from '../i18n.ts';
 import { Icon } from './Icon.tsx';
 
 /* ───────────── Chip ───────────── */
@@ -101,6 +102,45 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
 
 export function Notice({ children }: { children: ComponentChildren }) {
   return <div class="notice">{children}</div>;
+}
+
+export function ErrorBox({
+  offline,
+  onRetry,
+  onSettings,
+}: {
+  offline: boolean;
+  onRetry: () => void;
+  onSettings?: () => void;
+}) {
+  return (
+    <div class="empty">
+      <div class="empty__icon">
+        <Icon name="offline" size={30} />
+      </div>
+      <h2>{offline ? t('netError') : t('loadError')}</h2>
+      <p>{offline ? t('netErrorBody') : t('loadErrorHint')}</p>
+      <div class="actions">
+        <button type="button" class="btn btn--outline" onClick={onRetry}>
+          {t('retry')}
+        </button>
+        {onSettings ? (
+          <button type="button" class="btn btn--text" onClick={onSettings}>
+            {t('toSettings')}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export function ProgressBar({ value, label }: { value: number; label: string }) {
+  const pct = Math.max(0, Math.min(100, Math.round(value * 100)));
+  return (
+    <div class="progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={label}>
+      <div class="progress__bar" style={{ width: `${pct}%` }} />
+    </div>
+  );
 }
 
 /* ───────────── Подсветка слова в предложении ───────────── */

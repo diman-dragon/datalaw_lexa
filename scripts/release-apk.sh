@@ -21,10 +21,6 @@ OUT_APK="$OUT_DIR/datalaw_lexa-${VERSION}.apk"
 
 echo "▶ datalaw_lexa ${VERSION} (versionCode ${VERSION_CODE})"
 
-if [ ! -f public/data/meta.json ]; then
-  echo "✖ Нет public/data/meta.json — сначала соберите словарь: npm run data:build (или npm run data:sample для проверки)" >&2
-  exit 1
-fi
 
 [ -d android ] || npx cap add android
 

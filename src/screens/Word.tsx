@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { Header } from '../components/Header.tsx';
 import { Icon } from '../components/Icon.tsx';
-import { Chip, Segmented, Skeleton } from '../components/ui.tsx';
+import { Chip, ErrorBox, Segmented, Skeleton } from '../components/ui.tsx';
 import { useResource } from '../hooks.ts';
 import type { StringKey } from '../i18n.ts';
 import { t } from '../i18n.ts';
@@ -18,8 +18,9 @@ import type { FrequencyBand } from '../lib/entry.ts';
 import { suggestSimilar } from '../lib/search.ts';
 import { LOCALE, speak, stopSpeaking } from '../lib/speech.ts';
 import { normalizeEn } from '../lib/text.ts';
+import { DataUnavailableError } from '../lib/source.ts';
 import { shareText, tap } from '../native.ts';
-import { openWord } from '../router.ts';
+import { navigate, openWord } from '../router.ts';
 import { isSaved, pushHistory, saved, settings, showToast, toggleSaved, useStore } from '../store.ts';
 import { Definitions } from './word/Definitions.tsx';
 import { Examples } from './word/Examples.tsx';
@@ -193,6 +194,14 @@ export function WordScreen({ word }: { word: string }) {
       </section>
 
       {res.status === 'loading' ? <Skeleton lines={6} /> : null}
+
+      {res.status === 'error' ? (
+        <ErrorBox
+          offline={res.error instanceof DataUnavailableError}
+          onRetry={res.reload}
+          onSettings={() => navigate({ name: 'settings' })}
+        />
+      ) : null}
 
       {res.status === 'ready' && !entry ? <NotFound word={key} /> : null}
 

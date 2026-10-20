@@ -1,12 +1,16 @@
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Header } from '../components/Header.tsx';
 import { Icon } from '../components/Icon.tsx';
-import { Segmented, Switch } from '../components/ui.tsx';
+import { ProgressBar, Segmented, Switch } from '../components/ui.tsx';
 import { useResource } from '../hooks.ts';
 import { t } from '../i18n.ts';
 import { loadMeta } from '../lib/data.ts';
+import type { Progress } from '../lib/download.ts';
+import { cacheCount, clearCache, fetchManifest, installPack, packInfo, removePack } from '../lib/pack.ts';
+import type { PackInfo } from '../lib/pack.ts';
 import { tap } from '../native.ts';
 import { navigate } from '../router.ts';
-import { settings, updateSettings, useStore } from '../store.ts';
+import { settings, showToast, updateSettings, useStore } from '../store.ts';
 import type { AccentPref, ThemeMode, UiLang } from '../store.ts';
 
 const THEMES: ReadonlyArray<{ value: ThemeMode; label: 'themeAuto' | 'themeLight' | 'themeAmoled' }> = [
@@ -15,11 +19,125 @@ const THEMES: ReadonlyArray<{ value: ThemeMode; label: 'themeAuto' | 'themeLight
   { value: 'amoled', label: 'themeAmoled' },
 ];
 
-export function SettingsScreen() {
+const mb = (bytes: number) => Math.max(1, Math.round(bytes / 1048576));
+
+function DataSection() {
   const s = useStore(settings);
   const meta = useResource('meta', loadMeta);
   const m = meta.data;
   const fmt = (n: number) => n.toLocaleString(s.uiLang === 'ru' ? 'ru-RU' : 'en-US');
+
+  const [info, setInfo] = useState<PackInfo | null>(null);
+  const [remote, setRemote] = useState<{ version: string; total: number } | null>(null);
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [cached, setCached] = useState(0);
+  const ctrl = useRef<AbortController | null>(null);
+  const busy = progress !== null;
+
+  const refresh = async () => {
+    setInfo(await packInfo());
+    setCached(await cacheCount());
+    try {
+      const man = await fetchManifest();
+      setRemote({ version: man.version, total: man.total });
+    } catch {
+      setRemote(null); // нет сети — просто не знаем размер
+    }
+  };
+  useEffect(() => {
+    void refresh();
+    return () => ctrl.current?.abort();
+  }, []);
+
+  const download = async () => {
+    tap();
+    const c = new AbortController();
+    ctrl.current = c;
+    setProgress({ files: 0, totalFiles: 1, bytes: 0, totalBytes: remote?.total ?? 1 });
+    try {
+      await installPack(setProgress, c.signal);
+      showToast(t('toastDownloaded'));
+    } catch (e) {
+      showToast(e instanceof DOMException && e.name === 'AbortError' ? t('toastDownloadCancelled') : t('toastDownloadFailed'));
+    } finally {
+      ctrl.current = null;
+      setProgress(null);
+      await refresh();
+    }
+  };
+
+  const remove = async () => {
+    if (!window.confirm(t('dataRemoveConfirm'))) return;
+    await removePack();
+    showToast(t('toastRemovedPack'));
+    await refresh();
+  };
+
+  const wipeCache = async () => {
+    await clearCache();
+    showToast(t('toastCacheCleared'));
+    setCached(await cacheCount());
+  };
+
+  const installed = info?.installed === true;
+  const hasUpdate = installed && remote !== null && remote.version !== info?.version;
+  const size = remote?.total ?? info?.bytes;
+
+  return (
+    <section class="group">
+      <h2 class="group__title">{t('setData')}</h2>
+      <div class="datastate">
+        <div class="datastate__head">
+          <Icon name="offline" size={20} />
+          <span>{installed ? t('dataModeOffline') : t('dataModeOnline')}</span>
+          {hasUpdate ? <span class="badge">{t('dataUpdate')}</span> : null}
+        </div>
+        <p class="muted">{installed ? t('dataModeOfflineBody') : t('dataModeOnlineBody')}</p>
+        {m ? (
+          <p class="muted">
+            {t('dataInfo', { words: fmt(m.words), forms: fmt(m.forms), ru: fmt(m.ruTerms), sent: fmt(m.sentences) })}
+            {' · '}
+            {t('dataBuilt', { date: (info?.version ?? m.built).slice(0, 10) })}
+          </p>
+        ) : null}
+
+        {busy ? (
+          <>
+            <ProgressBar value={progress.totalBytes > 0 ? progress.bytes / progress.totalBytes : 0} label={t('dataDownloading', { done: '', total: '' })} />
+            <p class="muted">{t('dataDownloading', { done: String(mb(progress.bytes)), total: String(mb(progress.totalBytes)) })}</p>
+            <button type="button" class="btn btn--outline btn--block" onClick={() => ctrl.current?.abort()}>
+              {t('dataCancel')}
+            </button>
+          </>
+        ) : !installed || hasUpdate ? (
+          <button type="button" class="btn btn--primary btn--block" onClick={() => void download()} disabled={!installed && remote === null}>
+            {hasUpdate ? t('dataUpdateAction') : size ? t('dataDownloadSize', { mb: String(mb(size)) }) : t('dataDownload')}
+          </button>
+        ) : (
+          <p class="muted">{t('dataUpToDate')}</p>
+        )}
+
+        {installed && !busy ? (
+          <button type="button" class="btn btn--danger btn--block" onClick={() => void remove()}>
+            {t('dataRemove')}
+          </button>
+        ) : null}
+
+        {!installed && cached > 0 ? (
+          <div class="field field--row">
+            <span class="muted">{t('dataCache', { n: fmt(cached) })}</span>
+            <button type="button" class="btn btn--text" onClick={() => void wipeCache()}>
+              {t('dataCacheClear')}
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+export function SettingsScreen() {
+  const s = useStore(settings);
 
   return (
     <>
@@ -93,19 +211,7 @@ export function SettingsScreen() {
         </div>
       </section>
 
-      <section class="group">
-        <h2 class="group__title">{t('setData')}</h2>
-        {m ? (
-          <>
-            <p class="muted">
-              {t('setDataInfo', { words: fmt(m.words), forms: fmt(m.forms), ru: fmt(m.ruTerms), sent: fmt(m.sentences) })}
-            </p>
-            <p class="muted">{t('setDataBuilt', { date: m.built.slice(0, 10) })}</p>
-          </>
-        ) : (
-          <p class="muted">{t('dataMissingBody')}</p>
-        )}
-      </section>
+      <DataSection />
 
       <button type="button" class="row row--card" onClick={() => navigate({ name: 'about' })}>
         <Icon name="info" size={20} />

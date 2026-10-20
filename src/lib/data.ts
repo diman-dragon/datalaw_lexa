@@ -1,28 +1,16 @@
 import { SHARDS, shardName, shardOf } from './hash.ts';
 import { parseWordList } from './search.ts';
 import type { WordIndex } from './search.ts';
+import { readFile } from './source.ts';
 import type { Entry, Meta, SentencePair } from './types.ts';
 
 /**
- * Офлайн-данные лежат в ресурсах приложения (public/data → assets/public/data в APK)
- * и читаются обычным fetch по относительному адресу — сеть не нужна.
+ * Доступ к словарю: скачанный пакет → кэш → сервер (см. source.ts).
+ * Недоступность данных (нет сети и нет пакета) — исключение; «слова нет» — null/пустой результат.
  */
-const base = (): string => `${import.meta.env.BASE_URL}data/`;
-
-async function getText(path: string): Promise<string | null> {
-  try {
-    const res = await fetch(base() + path);
-    if (!res.ok) return null;
-    const text = await res.text();
-    // dev-сервер на отсутствующий файл отдаёт index.html — считаем, что файла нет
-    return text.startsWith('<') ? null : text;
-  } catch {
-    return null;
-  }
-}
 
 async function getJson<T>(path: string): Promise<T | null> {
-  const text = await getText(path);
+  const text = await readFile(path);
   if (text === null) return null;
   try {
     return JSON.parse(text) as T;
@@ -33,17 +21,20 @@ async function getJson<T>(path: string): Promise<T | null> {
 
 const once = new Map<string, Promise<unknown>>();
 
-/** Один запрос на файл, даже если спрашивают одновременно. */
+/** Один запрос на файл. Неудачи не запоминаем — повтор возможен. */
 function memo<T>(key: string, load: () => Promise<T>): Promise<T> {
   let p = once.get(key) as Promise<T> | undefined;
   if (!p) {
-    p = load();
+    p = load().catch((e: unknown) => {
+      once.delete(key);
+      throw e;
+    });
     once.set(key, p);
   }
   return p;
 }
 
-/** Результаты шардов держим в памяти (последние ~64 файла). */
+/** Шарды держим в памяти (последние ~64 файла). */
 const SHARD_LIMIT = 64;
 
 function shard<T>(folder: 'e' | 'r' | 's', key: string): Promise<Record<string, T>> {
@@ -62,13 +53,13 @@ const emptyIndex = (): WordIndex => ({ words: [], score: [], label: new Map() })
 
 export const loadEnIndex = (): Promise<WordIndex> =>
   memo('words', async () => {
-    const text = await getText('words.txt');
+    const text = await readFile('words.txt');
     return text ? parseWordList(text) : emptyIndex();
   });
 
 export const loadRuIndex = (): Promise<WordIndex> =>
   memo('rwords', async () => {
-    const text = await getText('rwords.txt');
+    const text = await readFile('rwords.txt');
     return text ? parseWordList(text) : emptyIndex();
   });
 
@@ -85,6 +76,10 @@ export async function getReverse(key: string): Promise<string[]> {
 }
 
 export async function getSentences(key: string): Promise<SentencePair[]> {
-  const s = await shard<SentencePair[]>('s', key);
-  return s[key] ?? [];
+  try {
+    const s = await shard<SentencePair[]>('s', key);
+    return s[key] ?? [];
+  } catch {
+    return []; // примеры — не критичны: без сети просто не показываем
+  }
 }

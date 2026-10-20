@@ -69,6 +69,8 @@ export interface Settings {
   /** Произношение по умолчанию: IPA и голос */
   accent: AccentPref;
   haptics: boolean;
+  /** Показывать карточку «скачайте словарь для офлайна» на главном */
+  offlineHint: boolean;
 }
 
 function defaultSettings(): Settings {
@@ -78,6 +80,7 @@ function defaultSettings(): Settings {
     uiLang: nav.startsWith('ru') ? 'ru' : 'en',
     accent: nav === 'en-gb' ? 'uk' : 'us',
     haptics: true,
+    offlineHint: true,
   };
 }
 
@@ -90,6 +93,7 @@ function reviveSettings(raw: unknown): Settings {
     uiLang: r.uiLang === 'ru' || r.uiLang === 'en' ? r.uiLang : base.uiLang,
     accent: r.accent === 'uk' || r.accent === 'us' ? r.accent : base.accent,
     haptics: typeof r.haptics === 'boolean' ? r.haptics : base.haptics,
+    offlineHint: typeof r.offlineHint === 'boolean' ? r.offlineHint : base.offlineHint,
   };
 }
 

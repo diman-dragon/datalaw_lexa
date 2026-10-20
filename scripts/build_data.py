@@ -9,6 +9,7 @@
 
 Выход — шардированные JSON в public/data (грузятся приложением через fetch из ресурсов APK):
   meta.json          сведения о сборке
+  manifest.json      список файлов и размеров (для загрузки «в офлайн» из приложения)
   words.txt          «слово \\t zipf*10» (отсортирован) — поиск по префиксу и исправление опечаток
   rwords.txt         «русский термин \\t оценка [\\t написание с ё]» — подсказки для русского ввода
   e/NNN.json         статьи: { слово: статья }
@@ -760,6 +761,17 @@ def build(
         "sources": ["Wiktionary (kaikki.org, CC BY-SA)", "wordfreq (CC BY-SA)", "Tatoeba (CC BY 2.0 FR)"],
     }
     (out / "meta.json").write_text(dump(meta), encoding="utf-8")
+
+    # manifest.json — список файлов для кнопки «Скачать для офлайна» в приложении
+    listing = sorted(
+        (f.relative_to(out).as_posix(), f.stat().st_size) for f in out.rglob("*") if f.is_file()
+    )
+    manifest = {
+        "version": meta["built"],
+        "total": sum(sz for _p, sz in listing),
+        "files": [[path, sz] for path, sz in listing],
+    }
+    (out / "manifest.json").write_text(dump(manifest), encoding="utf-8")
     size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
     log(f"Готово: {meta['words']:,} слов, {meta['forms']:,} форм, {meta['ruTerms']:,} русских терминов, "
         f"{meta['sentences']:,} предложений, {size / 1e6:.1f} МБ → {out}")

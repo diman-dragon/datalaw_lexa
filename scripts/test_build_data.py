@@ -65,6 +65,20 @@ class Sample(unittest.TestCase):
         self.assertNotIn("123", keys, "некорректный ключ")
         self.assertNotIn("haus", keys, "чужой язык")
 
+    def test_manifest(self) -> None:
+        manifest = json.loads((self.out / "manifest.json").read_text(encoding="utf-8"))
+        meta = json.loads((self.out / "meta.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["version"], meta["built"])
+        paths = [p for p, _sz in manifest["files"]]
+        self.assertEqual(len(paths), len(set(paths)))
+        for required in ("meta.json", "words.txt", "rwords.txt"):
+            self.assertIn(required, paths)
+        self.assertNotIn("manifest.json", paths)
+        self.assertEqual(manifest["total"], sum(sz for _p, sz in manifest["files"]))
+        for path, size in manifest["files"]:
+            self.assertEqual((self.out / path).stat().st_size, size, path)
+        self.assertTrue(any(p.startswith("e/") for p in paths))
+
     def test_entry_shard_lookup(self) -> None:
         shard = self.shard_ok("e", b.SHARDS_E, "hello")
         self.assertIn("hello", shard)
