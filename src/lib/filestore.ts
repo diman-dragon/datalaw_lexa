@@ -44,7 +44,7 @@ async function run<T>(area: Area, mode: IDBTransactionMode, fn: (s: IDBObjectSto
 }
 
 /** Любая ошибка IndexedDB переводит хранилище в режим «в памяти» — приложение продолжает работать. */
-async function guard<T>(area: Area, idb: () => Promise<T>, mem: () => T): Promise<T> {
+async function guard<T>(idb: () => Promise<T>, mem: () => T): Promise<T> {
   if (useMemory) return mem();
   try {
     return await idb();
@@ -57,7 +57,6 @@ async function guard<T>(area: Area, idb: () => Promise<T>, mem: () => T): Promis
 export const files = {
   async get(area: Area, path: string): Promise<string | undefined> {
     return guard(
-      area,
       async () => (await run<Rec | undefined>(area, 'readonly', (s) => s.get(path)))?.text,
       () => memory[area].get(path)?.text,
     );
@@ -65,7 +64,6 @@ export const files = {
 
   async has(area: Area, path: string): Promise<boolean> {
     return guard(
-      area,
       async () => (await run<number>(area, 'readonly', (s) => s.count(path))) > 0,
       () => memory[area].has(path),
     );
@@ -74,7 +72,6 @@ export const files = {
   async put(area: Area, path: string, text: string): Promise<void> {
     const rec: Rec = { path, text, at: Date.now() };
     await guard(
-      area,
       async () => {
         await run(area, 'readwrite', (s) => s.put(rec));
       },
@@ -86,7 +83,6 @@ export const files = {
 
   async delete(area: Area, path: string): Promise<void> {
     await guard(
-      area,
       async () => {
         await run(area, 'readwrite', (s) => s.delete(path));
       },
@@ -98,7 +94,6 @@ export const files = {
 
   async count(area: Area): Promise<number> {
     return guard(
-      area,
       () => run<number>(area, 'readonly', (s) => s.count()),
       () => memory[area].size,
     );
@@ -106,7 +101,6 @@ export const files = {
 
   async clear(area: Area): Promise<void> {
     await guard(
-      area,
       async () => {
         await run(area, 'readwrite', (s) => s.clear());
       },
@@ -119,7 +113,6 @@ export const files = {
   /** Оставляет в кэше не более max самых свежих файлов. */
   async trim(area: Area, max: number): Promise<void> {
     await guard(
-      area,
       async () => {
         const db = await openDb();
         await new Promise<void>((resolve, reject) => {

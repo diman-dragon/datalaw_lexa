@@ -9,7 +9,12 @@ Capacitor 8 · Preact · TypeScript · Vite. Версия **0.0.1** (дальш�
 ## Как работают данные
 Словарь собирается в CI и публикуется на **GitHub Pages**; приложение читает файлы оттуда «на лету» (с кэшем). В **Настройки → Данные словаря** — кнопка «Скачать для работы офлайн»: весь словарь сохраняется на устройстве.
 
-**Один раз включите Pages:** репозиторий → Settings → Pages → Source: **GitHub Actions**. Затем запустите workflow `Android` (push в `main`). Пока Pages не развёрнуты, приложение не найдёт словарь. Адрес можно переопределить через `VITE_DATA_URL`.
+**Настройка (один раз).** Репозиторий должен быть **публичным** (GitHub Pages бесплатен только для публичных; ключ подписи и так публичный):
+1. Settings → General → Danger Zone → Change visibility → **Public**.
+2. Settings → Pages → Source: **GitHub Actions**.
+3. Actions → `Android` → Run workflow (или push в `main`).
+
+Workflow соберёт словарь, опубликует его на `https://<owner>.github.io/<repo>/data/` и соберёт APK с этим адресом. Адрес можно переопределить через `VITE_DATA_URL`.
 
 В dev-режиме (`npm run data:sample && npm run dev`) данные берутся из `public/data` локально.
 
