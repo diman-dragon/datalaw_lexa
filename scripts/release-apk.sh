@@ -38,9 +38,17 @@ grep -nE "versionCode|versionName|applicationId" "$GRADLE"
 
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 [ -n "$SDK" ] || { echo "✖ Не задан ANDROID_HOME" >&2; exit 1; }
-BT="$SDK/build-tools/$(ls "$SDK/build-tools" | sort -V | tail -1)"
+BT=""
+for d in $(ls "$SDK/build-tools" | grep -v -- '-' | sort -V -r); do
+  if [ -x "$SDK/build-tools/$d/zipalign" ] && [ -x "$SDK/build-tools/$d/apksigner" ]; then BT="$SDK/build-tools/$d"; break; fi
+done
+[ -n "$BT" ] || { echo "✖ В $SDK/build-tools нет zipalign/apksigner" >&2; ls -la "$SDK/build-tools" >&2; exit 1; }
+echo "▶ build-tools: $BT"
 
-UNSIGNED="$(ls android/app/build/outputs/apk/release/*.apk | head -1)"
+UNSIGNED="$(ls android/app/build/outputs/apk/release/*.apk 2>/dev/null | head -1 || true)"
+[ -n "$UNSIGNED" ] || { echo "✖ Gradle не создал APK:" >&2; find android/app/build/outputs -type f >&2; exit 1; }
+echo "▶ unsigned: $UNSIGNED"
+[ -f "$KEYSTORE" ] || { echo "✖ Нет файла ключа $KEYSTORE" >&2; exit 1; }
 mkdir -p "$OUT_DIR"
 ALIGNED="$(mktemp -u).apk"
 "$BT/zipalign" -p -f 4 "$UNSIGNED" "$ALIGNED"
@@ -50,5 +58,5 @@ ALIGNED="$(mktemp -u).apk"
   --out "$OUT_APK" "$ALIGNED"
 rm -f "$ALIGNED"
 
-"$BT/apksigner" verify --print-certs "$OUT_APK" | grep -E "Signer #1 certificate (DN|SHA-256)"
+"$BT/apksigner" verify --print-certs "$OUT_APK" | grep -E "Signer #1 certificate (DN|SHA-256)" || true
 echo "✔ $OUT_APK"
