@@ -1,0 +1,318 @@
+import { settings } from './store.ts';
+
+const en = {
+  appName: 'Lexa',
+  navSearch: 'Search',
+  navSaved: 'My words',
+  navHistory: 'History',
+  openSettings: 'Settings',
+
+  homeHeadline: 'Every word, with all its shades',
+  homeSub: 'English ⇄ Russian dictionary that works fully offline.',
+  searchPlaceholder: 'English or Russian word…',
+  searchClear: 'Clear',
+  sugNothing: 'No matches',
+  homeWotd: 'Word of the day',
+  homeRandom: 'Another word',
+  homeRecent: 'Recent',
+  homeTipTitle: 'Search in both directions',
+  homeTipBody: 'Type an English word to see meanings and translations, or a Russian word to find English equivalents.',
+  dataMissingTitle: 'Dictionary data not found',
+  dataMissingBody: 'This build has no dictionary files. Build them with “npm run data:build”, then rebuild the app.',
+
+  tabDefinitions: 'Meanings',
+  tabTranslations: 'Translation',
+  tabThesaurus: 'Thesaurus',
+  tabExamples: 'Examples',
+  freqVeryCommon: 'Very common',
+  freqCommon: 'Common',
+  freqUncommon: 'Uncommon',
+  freqRare: 'Rare',
+  wordNotFound: 'Word not found',
+  wordNotFoundHint: 'Check the spelling. Did you mean:',
+  formOf: 'Form of a word',
+  openLemma: 'Open',
+  pronounce: 'Pronounce',
+  addToSaved: 'Add to My words',
+  removeFromSaved: 'Remove from My words',
+  toastSaved: 'Saved to My words',
+  toastRemoved: 'Removed from My words',
+  toastCopied: 'Copied',
+  toastNoVoice: 'No speech voice installed on this device',
+  share: 'Share',
+  back: 'Back',
+  sectionSynonyms: 'Synonyms',
+  sectionAntonyms: 'Antonyms',
+  seeAll: 'More',
+  etymology: 'Origin',
+  attribution: 'Data: Wiktionary, Tatoeba, wordfreq',
+
+  relSyn: 'Synonyms',
+  relAnt: 'Antonyms',
+  relHyper: 'A kind of…',
+  relHypo: 'Kinds of it',
+  relRel: 'Related',
+  relDer: 'Derived words',
+  relCoord: 'Same group',
+  relEmpty: 'The dictionary has no related words for this entry.',
+
+  trGroupsTitle: 'Translations by meaning',
+  trNone: 'No Russian translation for this word in the offline dictionary.',
+  trTapHear: 'Tap a translation to hear it',
+  trSource: 'Source: Wiktionary (CC BY-SA)',
+
+  exDict: 'From the dictionary',
+  exSentences: 'Real sentences',
+  exNone: 'No examples for this word',
+  exSource: 'Source: Tatoeba (CC BY 2.0 FR)',
+
+  savedTitle: 'My words',
+  savedEmpty: 'Star a word and it will appear here.',
+  savedFilter: 'Filter words',
+  savedExport: 'Share list',
+  savedNoMatch: 'No matches',
+
+  historyTitle: 'History',
+  historyEmpty: 'Words you look up will appear here.',
+  historyClear: 'Clear',
+  historyClearConfirm: 'Clear the whole history?',
+  dayToday: 'Today',
+  dayYesterday: 'Yesterday',
+
+  settingsTitle: 'Settings',
+  setAppearance: 'Appearance',
+  setTheme: 'Theme',
+  themeAuto: 'Auto',
+  themeAutoHint: 'Follows the system',
+  themeLight: 'Light brown',
+  themeAmoled: 'AMOLED',
+  setLanguage: 'Language',
+  setUiLang: 'Interface language',
+  setPronunciation: 'Pronunciation',
+  setAccent: 'English accent',
+  setBehavior: 'Behavior',
+  setHaptics: 'Haptic feedback',
+  setData: 'Dictionary data',
+  setDataInfo: '{words} words · {forms} forms · {ru} Russian terms · {sent} sentences',
+  setDataBuilt: 'Built {date}',
+  setAbout: 'About & licenses',
+  setVersion: 'Version {v}',
+
+  findTitle: '“{q}” in English',
+  findHint: 'English equivalents:',
+  findEmpty: 'Nothing found in the dictionary.',
+
+  aboutTitle: 'About Lexa',
+  aboutIntro:
+    'Lexa is an English ⇄ Russian dictionary built entirely on open data and bundled into the app: no internet, accounts, analytics or ads. Oxford and Cambridge content is proprietary and cannot be embedded, so Lexa uses the best open sources instead.',
+  aboutSources: 'Data sources',
+  aboutWikt: 'Meanings, IPA, examples, thesaurus relations and Russian translations by sense — Wiktionary, extracted by kaikki.org (Wiktextract).',
+  aboutFreq: 'Word frequency and ranking — wordfreq.',
+  aboutTat: 'Example sentences with Russian translations — Tatoeba.',
+  aboutLicenseNote: 'Wiktionary data is available under CC BY-SA 4.0, wordfreq data under CC BY-SA 4.0, Tatoeba sentences under CC BY 2.0 FR.',
+  aboutPrivacyTitle: 'Privacy',
+  aboutPrivacy: 'Everything is looked up on your device. History and saved words never leave it.',
+} as const;
+
+export type StringKey = keyof typeof en;
+
+const ru: Record<StringKey, string> = {
+  appName: 'Lexa',
+  navSearch: 'Поиск',
+  navSaved: 'Мои слова',
+  navHistory: 'История',
+  openSettings: 'Настройки',
+
+  homeHeadline: 'Каждое слово — со всеми оттенками',
+  homeSub: 'Англо-русский словарь, который полностью работает офлайн.',
+  searchPlaceholder: 'Английское или русское слово…',
+  searchClear: 'Очистить',
+  sugNothing: 'Ничего не найдено',
+  homeWotd: 'Слово дня',
+  homeRandom: 'Другое слово',
+  homeRecent: 'Недавние',
+  homeTipTitle: 'Ищите в обе стороны',
+  homeTipBody: 'Введите английское слово — получите значения и перевод, или русское — найдём английские эквиваленты.',
+  dataMissingTitle: 'Данные словаря не найдены',
+  dataMissingBody: 'В этой сборке нет файлов словаря. Соберите их командой «npm run data:build» и пересоберите приложение.',
+
+  tabDefinitions: 'Значения',
+  tabTranslations: 'Перевод',
+  tabThesaurus: 'Синонимы',
+  tabExamples: 'Примеры',
+  freqVeryCommon: 'Очень частое',
+  freqCommon: 'Частое',
+  freqUncommon: 'Нечастое',
+  freqRare: 'Редкое',
+  wordNotFound: 'Слово не найдено',
+  wordNotFoundHint: 'Проверьте написание. Возможно, вы искали:',
+  formOf: 'Форма слова',
+  openLemma: 'Открыть',
+  pronounce: 'Произнести',
+  addToSaved: 'Добавить в «Мои слова»',
+  removeFromSaved: 'Убрать из «Моих слов»',
+  toastSaved: 'Добавлено в «Мои слова»',
+  toastRemoved: 'Убрано из «Моих слов»',
+  toastCopied: 'Скопировано',
+  toastNoVoice: 'В системе не установлен голос синтеза речи',
+  share: 'Поделиться',
+  back: 'Назад',
+  sectionSynonyms: 'Синонимы',
+  sectionAntonyms: 'Антонимы',
+  seeAll: 'Ещё',
+  etymology: 'Происхождение',
+  attribution: 'Данные: Wiktionary, Tatoeba, wordfreq',
+
+  relSyn: 'Синонимы',
+  relAnt: 'Антонимы',
+  relHyper: 'Вид чего',
+  relHypo: 'Виды',
+  relRel: 'Связанные',
+  relDer: 'Производные',
+  relCoord: 'Той же группы',
+  relEmpty: 'В словаре нет связанных слов для этой статьи.',
+
+  trGroupsTitle: 'Переводы по значениям',
+  trNone: 'Для этого слова в офлайн-словаре нет русского перевода.',
+  trTapHear: 'Нажмите на перевод, чтобы услышать',
+  trSource: 'Источник: Wiktionary (CC BY-SA)',
+
+  exDict: 'Из словаря',
+  exSentences: 'Живые предложения',
+  exNone: 'Примеров для этого слова нет',
+  exSource: 'Источник: Tatoeba (CC BY 2.0 FR)',
+
+  savedTitle: 'Мои слова',
+  savedEmpty: 'Отмечайте слова звёздочкой — они появятся здесь.',
+  savedFilter: 'Фильтр по словам',
+  savedExport: 'Поделиться списком',
+  savedNoMatch: 'Ничего не найдено',
+
+  historyTitle: 'История',
+  historyEmpty: 'Здесь появятся слова, которые вы искали.',
+  historyClear: 'Очистить',
+  historyClearConfirm: 'Очистить всю историю?',
+  dayToday: 'Сегодня',
+  dayYesterday: 'Вчера',
+
+  settingsTitle: 'Настройки',
+  setAppearance: 'Оформление',
+  setTheme: 'Тема',
+  themeAuto: 'Авто',
+  themeAutoHint: 'Как в системе',
+  themeLight: 'Светло-коричневая',
+  themeAmoled: 'AMOLED',
+  setLanguage: 'Язык',
+  setUiLang: 'Язык интерфейса',
+  setPronunciation: 'Произношение',
+  setAccent: 'Английский акцент',
+  setBehavior: 'Поведение',
+  setHaptics: 'Вибро-отклик',
+  setData: 'Данные словаря',
+  setDataInfo: '{words} слов · {forms} форм · {ru} русских терминов · {sent} предложений',
+  setDataBuilt: 'Собрано {date}',
+  setAbout: 'О приложении и лицензии',
+  setVersion: 'Версия {v}',
+
+  findTitle: '«{q}» по-английски',
+  findHint: 'Английские эквиваленты:',
+  findEmpty: 'В словаре ничего не найдено.',
+
+  aboutTitle: 'О Lexa',
+  aboutIntro:
+    'Lexa — англо-русский словарь на открытых данных, целиком встроенный в приложение: без интернета, аккаунтов, аналитики и рекламы. Содержимое Oxford и Cambridge проприетарное и не может быть встроено, поэтому используются лучшие открытые источники.',
+  aboutSources: 'Источники данных',
+  aboutWikt: 'Значения, транскрипция, примеры, связи слов и переводы на русский по значениям — Викисловарь, извлечённый проектом kaikki.org (Wiktextract).',
+  aboutFreq: 'Частотность слов и ранжирование — wordfreq.',
+  aboutTat: 'Примеры предложений с русским переводом — Tatoeba.',
+  aboutLicenseNote: 'Данные Викисловаря и wordfreq — лицензия CC BY-SA 4.0, предложения Tatoeba — CC BY 2.0 FR.',
+  aboutPrivacyTitle: 'Конфиденциальность',
+  aboutPrivacy: 'Все поиски выполняются на вашем устройстве. История и «Мои слова» никуда не передаются.',
+};
+
+const DICTS: Record<'en' | 'ru', Record<StringKey, string>> = { en, ru };
+
+export function t(key: StringKey, vars?: Record<string, string | number>): string {
+  let s = DICTS[settings.get().uiLang][key];
+  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, String(v));
+  return s;
+}
+
+/** «1 слово · 2 слова · 5 слов» */
+export function wordsCount(n: number): string {
+  if (settings.get().uiLang === 'en') return `${n} ${n === 1 ? 'word' : 'words'}`;
+  const m10 = n % 10;
+  const m100 = n % 100;
+  const form = m10 === 1 && m100 !== 11 ? 'слово' : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? 'слова' : 'слов';
+  return `${n} ${form}`;
+}
+
+const POS_RU: Record<string, string> = {
+  noun: 'существительное',
+  verb: 'глагол',
+  adjective: 'прилагательное',
+  adverb: 'наречие',
+  pronoun: 'местоимение',
+  preposition: 'предлог',
+  conjunction: 'союз',
+  interjection: 'междометие',
+  determiner: 'определитель',
+  numeral: 'числительное',
+  article: 'артикль',
+  particle: 'частица',
+  phrase: 'фраза',
+  proverb: 'пословица',
+  idiom: 'идиома',
+  prefix: 'приставка',
+  suffix: 'суффикс',
+  contraction: 'сокращение',
+  'proper noun': 'имя собственное',
+  abbreviation: 'аббревиатура',
+  initialism: 'инициализм',
+  acronym: 'акроним',
+  'prepositional phrase': 'предложный оборот',
+  'verb phrase': 'глагольная фраза',
+  'adverbial phrase': 'наречный оборот',
+};
+
+export function posLabel(pos: string): string {
+  const key = pos.toLowerCase();
+  return settings.get().uiLang === 'ru' ? (POS_RU[key] ?? key) : key;
+}
+
+const TAGS_RU: Record<string, string> = {
+  informal: 'разг.',
+  slang: 'сленг',
+  colloquial: 'разг.',
+  formal: 'офиц.',
+  literary: 'книжн.',
+  vulgar: 'вульг.',
+  offensive: 'оскорб.',
+  derogatory: 'пренебр.',
+  archaic: 'устар.',
+  obsolete: 'устар.',
+  dated: 'устар.',
+  rare: 'редк.',
+  figuratively: 'перен.',
+  humorous: 'шутл.',
+  poetic: 'поэт.',
+  technical: 'техн.',
+  transitive: 'перех.',
+  intransitive: 'неперех.',
+  countable: 'счётн.',
+  uncountable: 'несчётн.',
+  British: 'брит.',
+  US: 'США',
+  Australia: 'австрал.',
+};
+
+export const tagLabel = (tag: string): string => (settings.get().uiLang === 'ru' ? (TAGS_RU[tag] ?? tag) : tag);
+
+/** Грамматические пометки русских переводов: m, f, n, pl, pf, impf … */
+const MARK_RU: Record<string, string> = { m: 'м.', f: 'ж.', n: 'ср.', pl: 'мн.', pf: 'сов.', impf: 'несов.', anim: 'одуш.', inan: 'неодуш.' };
+
+export const markLabel = (marks: string): string =>
+  marks
+    .split(' ')
+    .map((m) => MARK_RU[m] ?? m)
+    .join(' ');
