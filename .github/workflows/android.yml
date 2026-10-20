@@ -56,7 +56,7 @@ jobs:
           pip install wordfreq
           python3 scripts/build_data.py --download --require-wordfreq
       - name: Upload dictionary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dictionary
           path: public/data
@@ -88,7 +88,7 @@ jobs:
       - name: Build, sign (persistent key) and align APK
         run: bash scripts/release-apk.sh
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: datalaw_lexa-apk
           path: release/*.apk
