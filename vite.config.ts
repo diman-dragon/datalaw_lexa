@@ -5,7 +5,7 @@ import preact from '@preact/preset-vite';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
-/** Словарь живёт на GitHub Pages и скачивается из приложения — в APK его не кладём. */
+/** Словарь живёт на ветке dictionary репозитория и скачивается из приложения — в APK его не кладём. */
 const noBundledData = (): Plugin => ({
   name: 'no-bundled-data',
   apply: 'build',

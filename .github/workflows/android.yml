@@ -36,7 +36,9 @@ jobs:
         run: npm run check
 
   data:
-    name: Build dictionary
+    name: Build and publish dictionary
+    permissions:
+      contents: write
     # тяжёлая сборка — не для pull request'ов
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -57,45 +59,17 @@ jobs:
         run: |
           pip install wordfreq
           python3 scripts/build_data.py --download --require-wordfreq
-      - name: Assemble site
-        run: |
-          mkdir -p site
-          cp -r public/data site/data
-          touch site/.nojekyll
-      - uses: actions/upload-artifact@v4
+      # Словарь публикуется в ветку `dictionary` этого же (публичного) репозитория и раздаётся
+      # через raw.githubusercontent.com — без Pages и каких-либо настроек.
+      - name: Publish dictionary to branch "dictionary"
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: site
-          path: site
-          include-hidden-files: true
-          retention-days: 7
-          if-no-files-found: error
-
-  # Словарь публикуется на GitHub Pages этого репозитория (бесплатно для публичного репозитория).
-  pages:
-    name: Publish dictionary to GitHub Pages
-    needs: data
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-    concurrency:
-      group: pages
-      cancel-in-progress: false
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: site
-          path: site
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - name: Deploy to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public/data
+          publish_branch: dictionary
+          force_orphan: true
+          enable_jekyll: false
+          commit_message: 'dictionary ${{ github.sha }}'
 
   android:
     name: Signed APK
@@ -118,11 +92,8 @@ jobs:
           python-version: '3.12'
       - name: Pillow (иконки и заставка)
         run: pip install pillow
-      - name: Dictionary URL (GitHub Pages of this repository)
-        run: |
-          owner="${GITHUB_REPOSITORY_OWNER,,}"
-          repo="${GITHUB_REPOSITORY#*/}"
-          echo "VITE_DATA_URL=https://${owner}.github.io/${repo}/data/" >> "$GITHUB_ENV"
+      - name: Dictionary URL (branch "dictionary" of this repository)
+        run: echo "VITE_DATA_URL=https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/dictionary/" >> "$GITHUB_ENV"
       - name: Install
         run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - name: Build, sign (persistent key) and align APK
