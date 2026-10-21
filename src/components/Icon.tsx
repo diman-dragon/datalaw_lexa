@@ -19,7 +19,10 @@ export type IconName =
   | 'check'
   | 'shuffle'
   | 'info'
-  | 'arrow-right';
+  | 'arrow-right'
+  | 'palette'
+  | 'data'
+  | 'book';
 
 const PATHS: Record<IconName, ComponentChildren> = {
   search: (
@@ -94,6 +97,21 @@ const PATHS: Record<IconName, ComponentChildren> = {
     </>
   ),
   'arrow-right': <path d="M5 12h14M13 6l6 6-6 6" />,
+  palette: (
+    <>
+      <path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.3.2-2.5 1.6-2.5H17a4 4 0 0 0 4-4c0-5-4-9.5-9-9.5z" />
+      <circle cx="8" cy="11" r="1" />
+      <circle cx="12" cy="7.5" r="1" />
+      <circle cx="16" cy="11" r="1" />
+    </>
+  ),
+  data: (
+    <>
+      <ellipse cx="12" cy="6" rx="7" ry="3" />
+      <path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" />
+    </>
+  ),
+  book: <path d="M5 4.5h10a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h10" />,
 };
 
 interface IconProps {

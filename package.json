@@ -1,6 +1,6 @@
 {
   "name": "datalaw_lexa",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "type": "module",
   "description": "datalaw_lexa — офлайн англо-русский словарь для Android (Capacitor + Preact + Vite)",

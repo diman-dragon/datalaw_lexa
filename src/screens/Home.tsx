@@ -11,6 +11,7 @@ import { indexOfWord, prefixSearch } from '../lib/search.ts';
 import type { Hit } from '../lib/search.ts';
 import { detectScript, normalizeEn, normalizeRu } from '../lib/text.ts';
 import { tap } from '../native.ts';
+import { openSettingsPage } from './Settings.tsx';
 import { navigate, openWord } from '../router.ts';
 import { history, settings, updateSettings, useStore } from '../store.ts';
 
@@ -178,7 +179,11 @@ export function HomeScreen() {
               <h2>{t('offlineHintTitle')}</h2>
               <p>{t('offlineHintBody')}</p>
               <div class="actions">
-                <button type="button" class="btn btn--primary" onClick={() => navigate({ name: 'settings' })}>
+                <button type="button" class="btn btn--primary" onClick={() => {
+                    openSettingsPage('data');
+                    navigate({ name: 'settings' });
+                  }}
+                >
                   {t('offlineHintAction')}
                 </button>
                 <button type="button" class="btn btn--text" onClick={() => updateSettings({ offlineHint: false })}>

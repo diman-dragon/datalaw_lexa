@@ -1,23 +1,75 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { Header } from '../components/Header.tsx';
-import { Icon } from '../components/Icon.tsx';
-import { ProgressBar, Segmented, Switch } from '../components/ui.tsx';
+import type { ComponentChildren } from 'preact';
+import { Icon, LogoMark } from '../components/Icon.tsx';
+import type { IconName } from '../components/Icon.tsx';
+import { ProgressBar, Switch } from '../components/ui.tsx';
 import { useResource } from '../hooks.ts';
 import { t } from '../i18n.ts';
+import type { StringKey } from '../i18n.ts';
 import { loadMeta } from '../lib/data.ts';
 import type { Progress } from '../lib/download.ts';
 import { cacheCount, clearCache, fetchManifest, installPack, packInfo, removePack } from '../lib/pack.ts';
 import type { PackInfo } from '../lib/pack.ts';
+import { LOCALE } from '../lib/speech.ts';
 import { tap } from '../native.ts';
-import { navigate } from '../router.ts';
+import { say } from '../speakUi.ts';
 import { settings, showToast, updateSettings, useStore } from '../store.ts';
 import type { AccentPref, ThemeMode, UiLang } from '../store.ts';
 
-const THEMES: ReadonlyArray<{ value: ThemeMode; label: 'themeAuto' | 'themeLight' | 'themeAmoled' }> = [
-  { value: 'auto', label: 'themeAuto' },
-  { value: 'light', label: 'themeLight' },
-  { value: 'amoled', label: 'themeAmoled' },
-];
+/* ───────────── Строительные блоки (как в Forma) ───────────── */
+
+function Group({ title, children }: { title?: string; children: ComponentChildren }) {
+  return (
+    <section class="group">
+      {title ? <h4 class="group__title">{title}</h4> : null}
+      <div class="group-box">{children}</div>
+    </section>
+  );
+}
+
+function Row({ title, sub, children }: { title: string; sub?: string; children?: ComponentChildren }) {
+  return (
+    <div class="set-row">
+      <div class="set-txt">
+        <b>{title}</b>
+        {sub ? <span>{sub}</span> : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Seg<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: ReadonlyArray<{ value: T; label: string }>;
+  value: T;
+  onChange: (v: T) => void;
+  label: string;
+}) {
+  return (
+    <div class="fseg" role="radiogroup" aria-label={label}>
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={o.value === value}
+          class={o.value === value ? 'on' : ''}
+          onClick={() => {
+            tap();
+            onChange(o.value);
+          }}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const mb = (bytes: number) => Math.max(1, Math.round(bytes / 1048576));
 
@@ -84,115 +136,136 @@ function DataSection() {
   const size = remote?.total ?? info?.bytes;
 
   return (
-    <section class="group">
-      <h2 class="group__title">{t('setData')}</h2>
-      <div class="datastate">
-        <div class="datastate__head">
-          <Icon name="offline" size={20} />
-          <span>{installed ? t('dataModeOffline') : t('dataModeOnline')}</span>
-          {hasUpdate ? <span class="badge">{t('dataUpdate')}</span> : null}
-        </div>
-        <p class="muted">{installed ? t('dataModeOfflineBody') : t('dataModeOnlineBody')}</p>
-        {m ? (
-          <p class="muted">
-            {t('dataInfo', { words: fmt(m.words), forms: fmt(m.forms), ru: fmt(m.ruTerms), sent: fmt(m.sentences) })}
-            {' · '}
-            {t('dataBuilt', { date: (info?.version ?? m.built).slice(0, 10) })}
-          </p>
-        ) : null}
+    <>
+      <Group title={t('setData')}>
+        <div class="pad datastate">
+          <div class="datastate__head">
+            <Icon name="offline" size={20} />
+            <span>{installed ? t('dataModeOffline') : t('dataModeOnline')}</span>
+            {hasUpdate ? <span class="badge">{t('dataUpdate')}</span> : null}
+          </div>
+          <p class="note note--flush">{installed ? t('dataModeOfflineBody') : t('dataModeOnlineBody')}</p>
+          {m ? (
+            <p class="note note--flush">
+              {t('dataInfo', { words: fmt(m.words), forms: fmt(m.forms), ru: fmt(m.ruTerms), sent: fmt(m.sentences) })}
+              {' · '}
+              {t('dataBuilt', { date: (info?.version ?? m.built).slice(0, 10) })}
+            </p>
+          ) : null}
 
-        {busy ? (
-          <>
-            <ProgressBar value={progress.totalBytes > 0 ? progress.bytes / progress.totalBytes : 0} label={t('dataDownloading', { done: '', total: '' })} />
-            <p class="muted">{t('dataDownloading', { done: String(mb(progress.bytes)), total: String(mb(progress.totalBytes)) })}</p>
-            <button type="button" class="btn btn--outline btn--block" onClick={() => ctrl.current?.abort()}>
-              {t('dataCancel')}
+          {busy ? (
+            <>
+              <ProgressBar value={progress.totalBytes > 0 ? progress.bytes / progress.totalBytes : 0} label={t('dataCancel')} />
+              <p class="note note--flush">{t('dataDownloading', { done: String(mb(progress.bytes)), total: String(mb(progress.totalBytes)) })}</p>
+              <button type="button" class="btn ghost wide" onClick={() => ctrl.current?.abort()}>
+                {t('dataCancel')}
+              </button>
+            </>
+          ) : !installed || hasUpdate ? (
+            <button type="button" class="btn primary wide" onClick={() => void download()} disabled={!installed && remote === null}>
+              <Icon name="data" size={18} />
+              {hasUpdate ? t('dataUpdateAction') : size ? t('dataDownloadSize', { mb: String(mb(size)) }) : t('dataDownload')}
             </button>
-          </>
-        ) : !installed || hasUpdate ? (
-          <button type="button" class="btn btn--primary btn--block" onClick={() => void download()} disabled={!installed && remote === null}>
-            {hasUpdate ? t('dataUpdateAction') : size ? t('dataDownloadSize', { mb: String(mb(size)) }) : t('dataDownload')}
-          </button>
-        ) : (
-          <p class="muted">{t('dataUpToDate')}</p>
-        )}
+          ) : (
+            <p class="note note--flush">{t('dataUpToDate')}</p>
+          )}
+        </div>
+      </Group>
 
-        {installed && !busy ? (
-          <button type="button" class="btn btn--danger btn--block" onClick={() => void remove()}>
-            {t('dataRemove')}
-          </button>
-        ) : null}
-
-        {!installed && cached > 0 ? (
-          <div class="field field--row">
-            <span class="muted">{t('dataCache', { n: fmt(cached) })}</span>
-            <button type="button" class="btn btn--text" onClick={() => void wipeCache()}>
-              {t('dataCacheClear')}
+      {installed && !busy ? (
+        <Group>
+          <div class="pad col">
+            <button type="button" class="btn ghost wide danger-t" onClick={() => void remove()}>
+              <Icon name="trash" size={18} />
+              {t('dataRemove')}
             </button>
           </div>
-        ) : null}
-      </div>
-    </section>
+        </Group>
+      ) : null}
+
+      {!installed && cached > 0 ? (
+        <Group>
+          <Row title={t('dataCache', { n: fmt(cached) })}>
+            <button type="button" class="btn ghost sm-btn" onClick={() => void wipeCache()}>
+              {t('dataCacheClear')}
+            </button>
+          </Row>
+        </Group>
+      ) : null}
+    </>
   );
 }
 
-export function SettingsScreen() {
-  const s = useStore(settings);
 
+/* ───────────── Подэкраны ───────────── */
+
+const THEMES: ReadonlyArray<{ value: ThemeMode; label: StringKey }> = [
+  { value: 'auto', label: 'themeAuto' },
+  { value: 'light', label: 'themeLight' },
+  { value: 'amoled', label: 'themeAmoled' },
+];
+
+function PageLook() {
+  const s = useStore(settings);
   return (
     <>
-      <Header back title={t('settingsTitle')} />
-
-      <section class="group">
-        <h2 class="group__title">{t('setAppearance')}</h2>
-        <span class="field__label">{t('setTheme')}</span>
-        <div class="themes" role="radiogroup" aria-label={t('setTheme')}>
-          {THEMES.map((th) => (
-            <button
-              key={th.value}
-              type="button"
-              role="radio"
-              aria-checked={s.theme === th.value}
-              class={s.theme === th.value ? 'theme-card is-active' : 'theme-card'}
-              onClick={() => {
-                tap();
-                updateSettings({ theme: th.value });
-              }}
-            >
-              <span class={`theme-card__swatch theme-card__swatch--${th.value}`} aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </span>
-              <span class="theme-card__label">{t(th.label)}</span>
-              {th.value === 'auto' ? <span class="theme-card__hint">{t('themeAutoHint')}</span> : null}
-            </button>
-          ))}
+      <Group title={t('setTheme')}>
+        <div class="pad">
+          <Seg<ThemeMode>
+            label={t('setTheme')}
+            value={s.theme}
+            onChange={(theme) => updateSettings({ theme })}
+            options={THEMES.map((th) => ({ value: th.value, label: t(th.label) }))}
+          />
         </div>
-      </section>
+        <div class="theme-row">
+          <button type="button" class="theme-prev tp-dark" onClick={() => updateSettings({ theme: 'amoled' })} aria-label={t('themeAmoled')}>
+            <i />
+            <i />
+            <i />
+            <span>{t('themeAmoledName')}</span>
+          </button>
+          <button type="button" class="theme-prev tp-light" onClick={() => updateSettings({ theme: 'light' })} aria-label={t('themeLight')}>
+            <i />
+            <i />
+            <i />
+            <span>{t('themeLightName')}</span>
+          </button>
+        </div>
+      </Group>
+      <Group title={t('setBehavior')}>
+        <Row title={t('setHaptics')} sub={t('setHapticsHint')}>
+          <Switch checked={s.haptics} onChange={(haptics) => updateSettings({ haptics })} label={t('setHaptics')} />
+        </Row>
+        <Row title={t('setOfflineHint')}>
+          <Switch checked={s.offlineHint} onChange={(offlineHint) => updateSettings({ offlineHint })} label={t('setOfflineHint')} />
+        </Row>
+      </Group>
+    </>
+  );
+}
 
-      <section class="group">
-        <h2 class="group__title">{t('setLanguage')}</h2>
-        <div class="field">
-          <span class="field__label">{t('setUiLang')}</span>
-          <Segmented<UiLang>
-            variant="pills"
+function PageLang() {
+  const s = useStore(settings);
+  return (
+    <>
+      <Group title={t('setLanguage')}>
+        <Row title={t('setUiLang')} sub={t('setUiLangHint')}>
+          <Seg<UiLang>
+            label={t('setUiLang')}
             value={s.uiLang}
             onChange={(uiLang) => updateSettings({ uiLang })}
             options={[
-              { value: 'ru', label: 'Русский' },
-              { value: 'en', label: 'English' },
+              { value: 'ru', label: 'RU' },
+              { value: 'en', label: 'EN' },
             ]}
           />
-        </div>
-      </section>
-
-      <section class="group">
-        <h2 class="group__title">{t('setPronunciation')}</h2>
-        <div class="field">
-          <span class="field__label">{t('setAccent')}</span>
-          <Segmented<AccentPref>
-            variant="pills"
+        </Row>
+      </Group>
+      <Group title={t('setPronunciation')}>
+        <Row title={t('setAccent')} sub={t('setAccentHint')}>
+          <Seg<AccentPref>
+            label={t('setAccent')}
             value={s.accent}
             onChange={(accent) => updateSettings({ accent })}
             options={[
@@ -200,25 +273,164 @@ export function SettingsScreen() {
               { value: 'uk', label: 'UK' },
             ]}
           />
+        </Row>
+        <div class="pad col">
+          <button type="button" class="btn ghost wide" onClick={() => void say('Hello, dictionary', LOCALE[s.accent])}>
+            <Icon name="volume" size={18} />
+            {t('setTestEn')}
+          </button>
+          <button type="button" class="btn ghost wide" onClick={() => void say('Привет, словарь', LOCALE.ru)}>
+            <Icon name="volume" size={18} />
+            {t('setTestRu')}
+          </button>
         </div>
-      </section>
-
-      <section class="group">
-        <h2 class="group__title">{t('setBehavior')}</h2>
-        <div class="field field--row">
-          <span class="field__label">{t('setHaptics')}</span>
-          <Switch checked={s.haptics} onChange={(haptics) => updateSettings({ haptics })} label={t('setHaptics')} />
-        </div>
-      </section>
-
-      <DataSection />
-
-      <button type="button" class="row row--card" onClick={() => navigate({ name: 'about' })}>
-        <Icon name="info" size={20} />
-        <span class="row__main">{t('setAbout')}</span>
-        <Icon name="arrow-right" size={18} />
-      </button>
-      <p class="src src--center">{t('setVersion', { v: __APP_VERSION__ })}</p>
+      </Group>
+      <p class="note">{t('setTtsNote')}</p>
     </>
+  );
+}
+
+function PageSources() {
+  return (
+    <>
+      <Group title={t('aboutSources')}>
+        <Row title="Wiktionary · kaikki.org" sub={t('aboutWikt')} />
+        <Row title="wordfreq" sub={t('aboutFreq')} />
+        <Row title="Tatoeba" sub={t('aboutTat')} />
+      </Group>
+      <p class="note">{t('aboutLicenseNote')}</p>
+      <Group title={t('aboutPrivacyTitle')}>
+        <div class="pad">
+          <p class="note note--flush">{t('aboutPrivacy')}</p>
+        </div>
+      </Group>
+    </>
+  );
+}
+
+function PageAbout() {
+  return (
+    <div class="about">
+      <div class="frame">
+        <span class="corner tl" />
+        <span class="corner tr" />
+        <span class="corner bl" />
+        <span class="corner br" />
+        <div class="frame-in">
+          <div class="logo-badge">
+            <LogoMark size={60} />
+          </div>
+          <p class="eyebrow">{t('aboutMadeBy')}</p>
+          <h2 class="brand">DataLaw DesignLab</h2>
+          <div class="orn">
+            <i />
+            <b />
+            <i />
+          </div>
+          <p class="made">{t('aboutMade')}</p>
+          <span class="ver-pill">{t('setVersion', { v: __APP_VERSION__ })}</span>
+        </div>
+      </div>
+      <p class="legal">{t('aboutLegal')}</p>
+    </div>
+  );
+}
+
+/* ───────────── Экран с горизонтальным пейджером ───────────── */
+
+type PageId = 'look' | 'lang' | 'data' | 'sources' | 'about';
+
+const PAGES: ReadonlyArray<{ id: PageId; icon: IconName; label: StringKey }> = [
+  { id: 'look', icon: 'palette', label: 'setPageLook' },
+  { id: 'lang', icon: 'translate', label: 'setPageLang' },
+  { id: 'data', icon: 'data', label: 'setPageData' },
+  { id: 'sources', icon: 'book', label: 'setPageSources' },
+  { id: 'about', icon: 'info', label: 'setPageAbout' },
+];
+
+/** Какой подэкран открыт — помним между заходами; извне можно попросить открыть нужный. */
+let remembered = 0;
+export function openSettingsPage(id: PageId): void {
+  remembered = Math.max(0, PAGES.findIndex((p) => p.id === id));
+}
+
+export function SettingsScreen() {
+  useStore(settings);
+  const [cur, setCur] = useState(remembered);
+  const pager = useRef<HTMLDivElement>(null);
+  const tabs = useRef<HTMLElement>(null);
+  const curRef = useRef(cur);
+  curRef.current = cur;
+
+  // при заходе — сразу на запомненный подэкран
+  useEffect(() => {
+    const el = pager.current;
+    if (el) el.scrollTo({ left: remembered * el.clientWidth });
+  }, []);
+
+  // активная вкладка в полосе — в поле зрения
+  useEffect(() => {
+    remembered = cur;
+    const b = tabs.current?.children[cur] as HTMLElement | undefined;
+    if (b && tabs.current) tabs.current.scrollTo({ left: b.offsetLeft - 16, behavior: 'smooth' });
+  }, [cur]);
+
+  const raf = useRef(0);
+  const onScroll = () => {
+    cancelAnimationFrame(raf.current);
+    raf.current = requestAnimationFrame(() => {
+      const el = pager.current;
+      if (!el) return;
+      const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+      if (i !== curRef.current && i >= 0 && i < PAGES.length) {
+        setCur(i);
+        tap();
+      }
+    });
+  };
+
+  const goTo = (i: number) => {
+    const el = pager.current;
+    if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' });
+  };
+
+  const content = [<PageLook />, <PageLang />, <DataSection />, <PageSources />, <PageAbout />];
+
+  return (
+    <div class="settings-view">
+      <header class="page-head">
+        <div>
+          <h1>{t('settingsTitle')}</h1>
+          <p class="sub">{t('settingsSub')}</p>
+        </div>
+      </header>
+      <nav class="set-tabs" role="tablist" ref={tabs}>
+        {PAGES.map((p, i) => (
+          <button
+            key={p.id}
+            type="button"
+            role="tab"
+            aria-selected={i === cur}
+            class={i === cur ? 'set-tab on' : 'set-tab'}
+            onClick={() => goTo(i)}
+          >
+            <Icon name={p.icon} size={18} />
+            {t(p.label)}
+          </button>
+        ))}
+      </nav>
+      <div class="pager" ref={pager} onScroll={onScroll}>
+        {PAGES.map((p, i) => (
+          <section key={p.id} class="page" role="tabpanel" aria-label={t(p.label)}>
+            <div class="page-in">{content[i]}</div>
+          </section>
+        ))}
+      </div>
+      <div class="dots" aria-hidden="true">
+        {PAGES.map((p, i) => (
+          <i key={p.id} class={i === cur ? 'on' : ''} />
+        ))}
+      </div>
+    </div>
   );
 }

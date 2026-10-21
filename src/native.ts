@@ -5,6 +5,7 @@ import { Share } from '@capacitor/share';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { setNativeSpeech } from './lib/speech.ts';
+import { navigate, parseHash, tabOf } from './router.ts';
 import type { NativeSpeech } from './lib/speech.ts';
 import { settings } from './store.ts';
 
@@ -16,9 +17,19 @@ export function initNative(): void {
   // нативный синтезатор речи (scripts/android/LexaSpeechPlugin.java)
   setNativeSpeech(registerPlugin<NativeSpeech>('LexaSpeech'));
   void CapApp.addListener('backButton', () => {
-    const atRoot = location.hash === '' || location.hash === '#/' || location.hash === '#';
-    if (atRoot) void CapApp.exitApp();
-    else history.back();
+    const route = parseHash(location.hash);
+    if (route.name === 'home') {
+      void CapApp.exitApp(); // «Поиск» — корень: назад закрывает приложение
+    } else if (tabOf(route) !== null) {
+      navigate({ name: 'home' }, true); // другая вкладка → на главную
+    } else {
+      // слово / обратный поиск → на предыдущий экран; если истории нет — на главную
+      const before = location.hash;
+      history.back();
+      setTimeout(() => {
+        if (location.hash === before) navigate({ name: 'home' }, true);
+      }, 160);
+    }
   });
 }
 

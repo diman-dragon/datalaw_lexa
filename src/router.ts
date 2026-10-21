@@ -6,8 +6,7 @@ export type Route =
   | { name: 'find'; query: string }
   | { name: 'saved' }
   | { name: 'history' }
-  | { name: 'settings' }
-  | { name: 'about' };
+  | { name: 'settings' };
 
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#\/?/, '');
@@ -23,9 +22,8 @@ export function parseHash(hash: string): Route {
     case 'history':
       return { name: 'history' };
     case 'settings':
-      return { name: 'settings' };
     case 'about':
-      return { name: 'about' };
+      return { name: 'settings' };
     default:
       return { name: 'home' };
   }
@@ -53,8 +51,6 @@ export function hrefFor(route: Route): string {
       return '#/history';
     case 'settings':
       return '#/settings';
-    case 'about':
-      return '#/about';
   }
 }
 
@@ -76,12 +72,13 @@ export function useRoute(): Route {
   return route;
 }
 
-/** Корневой экран вкладки — для нижней навигации (настройки и «О приложении» — отдельные экраны). */
-export function tabOf(route: Route): 'home' | 'saved' | 'history' | null {
+/** Корневой экран вкладки — для нижней навигации. */
+export function tabOf(route: Route): 'home' | 'saved' | 'history' | 'settings' | null {
   switch (route.name) {
     case 'home':
     case 'saved':
     case 'history':
+    case 'settings':
       return route.name;
     default:
       return null;
