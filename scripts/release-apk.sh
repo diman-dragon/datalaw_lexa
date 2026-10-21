@@ -27,6 +27,7 @@ echo "▶ datalaw_lexa ${VERSION} (versionCode ${VERSION_CODE})"
 npm run assets
 npm run build
 npx cap sync android
+node scripts/android-patch.mjs
 
 # versionCode / versionName
 GRADLE=android/app/build.gradle

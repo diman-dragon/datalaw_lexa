@@ -16,7 +16,8 @@ import {
 } from '../lib/entry.ts';
 import type { FrequencyBand } from '../lib/entry.ts';
 import { suggestSimilar } from '../lib/search.ts';
-import { LOCALE, speak, stopSpeaking } from '../lib/speech.ts';
+import { LOCALE, stopSpeaking } from '../lib/speech.ts';
+import { say } from '../speakUi.ts';
 import { normalizeEn } from '../lib/text.ts';
 import { DataUnavailableError } from '../lib/source.ts';
 import { shareText, tap } from '../native.ts';
@@ -91,9 +92,7 @@ export function WordScreen({ word }: { word: string }) {
     tap();
     setPlaying(true);
     try {
-      await speak(display, LOCALE[accent]);
-    } catch {
-      showToast(t('toastNoVoice'));
+      await say(display, LOCALE[accent]);
     } finally {
       setPlaying(false);
     }

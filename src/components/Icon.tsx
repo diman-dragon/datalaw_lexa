@@ -124,12 +124,14 @@ export function Icon({ name, size = 22, filled = false, class: className }: Icon
 }
 
 /** Знак приложения: два диалоговых облака (язык ↔ язык). */
+/** Фирменная «D» DataLaw DesignLab; цвет задаёт тема (CSS-маска по public/logo-mask.png). */
 export function LogoMark({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <rect width="32" height="32" rx="9" fill="var(--accent)" />
-      <path d="M8 9.5A2.5 2.5 0 0 1 10.5 7h8A2.5 2.5 0 0 1 21 9.5v5a2.5 2.5 0 0 1-2.5 2.5H14l-3.6 3v-3A2.5 2.5 0 0 1 8 14.5z" fill="var(--accent-ink)" />
-      <path d="M23.5 13.5h-.3v2.3a4.2 4.2 0 0 1-3.2 4.1V21a2.5 2.5 0 0 0 2.5 2.5H24l3 2.5v-2.6a2.5 2.5 0 0 0 1.5-2.3v-4.6a2.5 2.5 0 0 0-2.5-2.5z" fill="var(--accent-ink)" opacity=".55" />
-    </svg>
+    <span
+      class="logo"
+      role="img"
+      aria-label="DataLaw DesignLab"
+      style={{ width: `${size}px`, height: `${size}px` }}
+    />
   );
 }

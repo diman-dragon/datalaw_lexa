@@ -1,64 +1,70 @@
 /* ───────────── Токены ─────────────
-   Светло-коричневая (по умолчанию) и AMOLED (чистый чёрный). */
+   Единое оформление DataLaw DesignLab (как в Forma):
+   светло-коричневая (по умолчанию) и AMOLED (чистый чёрный). */
 :root {
-  --bg: #e9dbc6;
-  --surface: #f4eadb;
-  --surface-2: #dfcdb3;
-  --ink: #33241a;
-  --ink-2: #5c4636;
-  --ink-3: #85705d;
-  --line: rgba(51, 36, 26, 0.14);
-  --accent: #8a4b1f;
-  --accent-ink: #fbf3e6;
-  --accent-soft: rgba(138, 75, 31, 0.13);
+  --bg: #ecdcc4;
+  --surface: #f6ecdb;
+  --surface-2: #e3d0b3;
+  --ink: #3b2a1a;
+  --ink-2: #5f4a31;
+  --ink-3: #86704f;
+  --line: #d0b891;
+  --accent: #8a5a2c;
+  --accent-ink: #fff7ea;
+  --accent-soft: rgba(138, 90, 44, 0.13);
+  --accent-line: rgba(138, 90, 44, 0.5);
   --warm: #a33a2a;
   --warm-soft: rgba(163, 58, 42, 0.12);
-  --danger: #b3261e;
-  --shadow: 0 1px 2px rgba(51, 36, 26, 0.08), 0 10px 26px -14px rgba(51, 36, 26, 0.35);
+  --danger: #b3342c;
+  --shadow: 0 10px 28px rgba(80, 50, 20, 0.22);
 
-  --font-ui: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'Iowan Old Style', 'Charter', 'Noto Serif', Georgia, serif;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Noto Serif', serif;
+  --r: 20px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   --sat: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
   --sab: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
-  --tabbar-h: 62px;
+  --tabbar-h: 66px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --bg: #000000;
-    --surface: #0c0b0a;
-    --surface-2: #171513;
-    --ink: #efe6d8;
-    --ink-2: #bdb2a1;
-    --ink-3: #857b6d;
-    --line: rgba(239, 230, 216, 0.11);
-    --accent: #e0a96d;
-    --accent-ink: #1a1006;
-    --accent-soft: rgba(224, 169, 109, 0.14);
+    --surface: #0e0e10;
+    --surface-2: #18181b;
+    --ink: #f4f0e9;
+    --ink-2: #c9c3b8;
+    --ink-3: #8f8b84;
+    --line: #25252a;
+    --accent: #d9b48a;
+    --accent-ink: #1a1209;
+    --accent-soft: rgba(217, 180, 138, 0.14);
+    --accent-line: rgba(217, 180, 138, 0.45);
     --warm: #e8836a;
     --warm-soft: rgba(232, 131, 106, 0.14);
-    --danger: #f2b8b5;
-    --shadow: none;
+    --danger: #ff6b6b;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
   --bg: #000000;
-  --surface: #0c0b0a;
-  --surface-2: #171513;
-  --ink: #efe6d8;
-  --ink-2: #bdb2a1;
-  --ink-3: #857b6d;
-  --line: rgba(239, 230, 216, 0.11);
-  --accent: #e0a96d;
-  --accent-ink: #1a1006;
-  --accent-soft: rgba(224, 169, 109, 0.14);
+  --surface: #0e0e10;
+  --surface-2: #18181b;
+  --ink: #f4f0e9;
+  --ink-2: #c9c3b8;
+  --ink-3: #8f8b84;
+  --line: #25252a;
+  --accent: #d9b48a;
+  --accent-ink: #1a1209;
+  --accent-soft: rgba(217, 180, 138, 0.14);
+  --accent-line: rgba(217, 180, 138, 0.45);
   --warm: #e8836a;
   --warm-soft: rgba(232, 131, 106, 0.14);
-  --danger: #f2b8b5;
-  --shadow: none;
+  --danger: #ff6b6b;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
 
@@ -108,6 +114,14 @@ ol {
 ul,
 ol {
   list-style: none;
+}
+h1,
+h2 {
+  font-family: var(--font-serif);
+  letter-spacing: 0.2px;
+}
+body {
+  -webkit-font-smoothing: antialiased;
 }
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -170,9 +184,7 @@ mark {
   justify-content: center;
   gap: 4px;
   padding: 6px 10px calc(6px + var(--sab));
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  background: var(--surface);
   border-top: 1px solid var(--line);
 }
 .tabbar__item {
@@ -184,8 +196,9 @@ mark {
   gap: 2px;
   padding: 4px 0;
   color: var(--ink-3);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
   text-align: center;
 }
 .tabbar__icon {
@@ -197,7 +210,7 @@ mark {
   transition: background 0.2s, color 0.2s;
 }
 .tabbar__item.is-active {
-  color: var(--ink);
+  color: var(--accent);
 }
 .tabbar__item.is-active .tabbar__icon {
   background: var(--accent-soft);
@@ -923,7 +936,7 @@ mark {
   min-height: 44px;
   padding: 0 18px;
   border-radius: 14px;
-  font-weight: 500;
+  font-weight: 650;
 }
 .btn--outline {
   border: 1px solid var(--line);
@@ -1128,10 +1141,10 @@ mark {
   opacity: 0.55;
 }
 .theme-card__swatch--light {
-  background: #e9dbc6;
+  background: #ecdcc4;
 }
 .theme-card__swatch--light i {
-  background: #8a4b1f;
+  background: #8a5a2c;
 }
 .theme-card__swatch--amoled {
   background: #000;
@@ -1140,10 +1153,10 @@ mark {
   background: #e0a96d;
 }
 .theme-card__swatch--auto {
-  background: linear-gradient(110deg, #e9dbc6 50%, #000 50%);
+  background: linear-gradient(110deg, #ecdcc4 50%, #000 50%);
 }
 .theme-card__swatch--auto i {
-  background: #8a4b1f;
+  background: #8a5a2c;
   mix-blend-mode: normal;
   box-shadow: 0 0 0 1px rgba(224, 169, 109, 0.5);
 }
@@ -1227,4 +1240,29 @@ mark {
 }
 .hint .actions {
   justify-content: flex-start;
+}
+
+/* ───────────── Знак DataLaw (маска «D») ───────────── */
+.logo {
+  display: inline-block;
+  flex: none;
+  background: var(--accent);
+  -webkit-mask: url('/logo-mask.png') center / contain no-repeat;
+  mask: url('/logo-mask.png') center / contain no-repeat;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.brand__name {
+  font: 600 18px/1.2 var(--font-serif);
+}
+.brand__sub {
+  color: var(--ink-3);
+  font-size: 13px;
 }

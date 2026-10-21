@@ -46,7 +46,9 @@ const en = {
   toastSaved: 'Saved to My words',
   toastRemoved: 'Removed from My words',
   toastCopied: 'Copied',
-  toastNoVoice: 'No speech voice installed on this device',
+  toastNoVoice: 'No voice for this language. Install it: Android Settings → System → Languages → Text-to-speech output',
+  toastNoEngine: 'No text-to-speech engine found. Install or enable one in Android Settings → Text-to-speech output',
+  toastSpeechFailed: 'Could not play the speech. Try again',
   share: 'Share',
   back: 'Back',
   sectionSynonyms: 'Synonyms',
@@ -132,14 +134,14 @@ const en = {
 
   aboutTitle: 'About Lexa',
   aboutIntro:
-    'Lexa is an English ⇄ Russian dictionary built entirely on open data and bundled into the app: no internet, accounts, analytics or ads. Oxford and Cambridge content is proprietary and cannot be embedded, so Lexa uses the best open sources instead.',
+    'Lexa is an English ⇄ Russian dictionary built on open data. It works online and, once downloaded, fully offline — with no accounts, analytics or ads. Oxford and Cambridge content is proprietary and cannot be used, so Lexa relies on the best open sources instead.',
   aboutSources: 'Data sources',
   aboutWikt: 'Meanings, IPA, examples, thesaurus relations and Russian translations by sense — Wiktionary, extracted by kaikki.org (Wiktextract).',
   aboutFreq: 'Word frequency and ranking — wordfreq.',
   aboutTat: 'Example sentences with Russian translations — Tatoeba.',
   aboutLicenseNote: 'Wiktionary data is available under CC BY-SA 4.0, wordfreq data under CC BY-SA 4.0, Tatoeba sentences under CC BY 2.0 FR.',
   aboutPrivacyTitle: 'Privacy',
-  aboutPrivacy: 'Everything is looked up on your device. History and saved words never leave it.',
+  aboutPrivacy: 'Only dictionary files are downloaded (nothing about you is sent). History and saved words never leave your device.',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -190,7 +192,9 @@ const ru: Record<StringKey, string> = {
   toastSaved: 'Добавлено в «Мои слова»',
   toastRemoved: 'Убрано из «Моих слов»',
   toastCopied: 'Скопировано',
-  toastNoVoice: 'В системе не установлен голос синтеза речи',
+  toastNoVoice: 'Нет голоса для этого языка. Установите: Настройки Android → Система → Язык → Синтез речи',
+  toastNoEngine: 'Синтезатор речи не найден. Установите или включите его: Настройки Android → Синтез речи',
+  toastSpeechFailed: 'Не удалось воспроизвести. Попробуйте ещё раз'
   share: 'Поделиться',
   back: 'Назад',
   sectionSynonyms: 'Синонимы',
@@ -276,14 +280,14 @@ const ru: Record<StringKey, string> = {
 
   aboutTitle: 'О Lexa',
   aboutIntro:
-    'Lexa — англо-русский словарь на открытых данных, целиком встроенный в приложение: без интернета, аккаунтов, аналитики и рекламы. Содержимое Oxford и Cambridge проприетарное и не может быть встроено, поэтому используются лучшие открытые источники.',
+    'Lexa — англо-русский словарь на открытых данных. Работает онлайн, а после загрузки — полностью офлайн: без аккаунтов, аналитики и рекламы. Содержимое Oxford и Cambridge проприетарное и недоступно для использования, поэтому применяются лучшие открытые источники.',
   aboutSources: 'Источники данных',
   aboutWikt: 'Значения, транскрипция, примеры, связи слов и переводы на русский по значениям — Викисловарь, извлечённый проектом kaikki.org (Wiktextract).',
   aboutFreq: 'Частотность слов и ранжирование — wordfreq.',
   aboutTat: 'Примеры предложений с русским переводом — Tatoeba.',
   aboutLicenseNote: 'Данные Викисловаря и wordfreq — лицензия CC BY-SA 4.0, предложения Tatoeba — CC BY 2.0 FR.',
   aboutPrivacyTitle: 'Конфиденциальность',
-  aboutPrivacy: 'Все поиски выполняются на вашем устройстве. История и «Мои слова» никуда не передаются.',
+  aboutPrivacy: 'Из сети загружаются только файлы словаря — данные о вас не передаются. История и «Мои слова» остаются на устройстве.',
 };
 
 const DICTS: Record<'en' | 'ru', Record<StringKey, string>> = { en, ru };

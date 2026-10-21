@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "assets"
 DEFAULT_RES = ROOT / "android" / "app" / "src" / "main" / "res"
-BACKGROUND = "#8A4B1F"
+BACKGROUND = "#0A0A0B"
 
 
 def load(name: str) -> Image.Image:
@@ -56,8 +56,9 @@ def main(res: Path) -> int:
     fg = load("icon-foreground.png")
     splash = load("splash.png")
     splash_dark = load("splash-dark.png")
+    mono = load("icon-monochrome.png")
 
-    counts = {"icon": 0, "round": 0, "foreground": 0, "splash": 0}
+    counts = {"icon": 0, "round": 0, "foreground": 0, "mono": 0, "splash": 0}
     for path in sorted(res.rglob("*.png")):
         name = path.name
         try:
@@ -72,11 +73,22 @@ def main(res: Path) -> int:
             counts["round"] += 1
         elif name == "ic_launcher_foreground.png":
             fit(fg, size).save(path)
+            fit(mono, size).save(path.with_name("ic_launcher_monochrome.png"))  # тематические иконки Android 13+
             counts["foreground"] += 1
+            counts["mono"] += 1
         elif name == "splash.png":
             night = "night" in path.parent.name
             fit(splash_dark if night else splash, size).save(path)
             counts["splash"] += 1
+
+    # monochrome-слой в adaptive-иконках
+    for xml in (res / "mipmap-anydpi-v26").glob("ic_launcher*.xml"):
+        text = xml.read_text(encoding="utf-8")
+        if "<monochrome" not in text and "</adaptive-icon>" in text:
+            text = text.replace(
+                "</adaptive-icon>", '    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>\n</adaptive-icon>'
+            )
+            xml.write_text(text, encoding="utf-8")
 
     bg = res / "values" / "ic_launcher_background.xml"
     bg.parent.mkdir(parents=True, exist_ok=True)

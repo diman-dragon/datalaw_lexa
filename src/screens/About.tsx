@@ -7,7 +7,13 @@ export function AboutScreen() {
     <>
       <Header back title={t('aboutTitle')} />
       <div class="about">
-        <LogoMark size={56} />
+        <div class="brand">
+          <LogoMark size={44} />
+          <div>
+            <div class="brand__name">DataLaw DesignLab</div>
+            <div class="brand__sub">Lexa · datalaw_lexa {__APP_VERSION__}</div>
+          </div>
+        </div>
         <p>{t('aboutIntro')}</p>
 
         <h2 class="section__title">{t('aboutSources')}</h2>
@@ -20,7 +26,6 @@ export function AboutScreen() {
 
         <h2 class="section__title">{t('aboutPrivacyTitle')}</h2>
         <p>{t('aboutPrivacy')}</p>
-        <p class="muted">datalaw_lexa {__APP_VERSION__}</p>
       </div>
     </>
   );

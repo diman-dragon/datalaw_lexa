@@ -3,9 +3,10 @@ import { Icon } from '../../components/Icon.tsx';
 import { useResource } from '../../hooks.ts';
 import { t } from '../../i18n.ts';
 import { getSentences } from '../../lib/data.ts';
-import { LOCALE, speak } from '../../lib/speech.ts';
+import { LOCALE } from '../../lib/speech.ts';
+import { say } from '../../speakUi.ts';
 import type { Entry } from '../../lib/types.ts';
-import { settings, showToast, useStore } from '../../store.ts';
+import { settings, useStore } from '../../store.ts';
 
 function dictionaryExamples(entry: Entry | null): string[] {
   const out: string[] = [];
@@ -20,7 +21,7 @@ export function Examples({ word, entry }: { word: string; entry: Entry | null })
   const pairs = sentences.data ?? [];
 
   const hear = (text: string) => {
-    speak(text, LOCALE[s.accent]).catch(() => showToast(t('toastNoVoice')));
+    void say(text, LOCALE[s.accent]);
   };
 
   const nothing = fromDict.length === 0 && sentences.status === 'ready' && pairs.length === 0;

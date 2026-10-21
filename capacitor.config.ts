@@ -5,14 +5,14 @@ const config: CapacitorConfig = {
   appName: 'Lexa',
   webDir: 'dist',
   android: {
-    backgroundColor: '#E9DBC6',
+    backgroundColor: '#ECDCC4',
     allowMixedContent: false,
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 0,
       launchAutoHide: false, // прячем вручную после гидрации (src/main.tsx)
-      backgroundColor: '#E9DBC6',
+      backgroundColor: '#ECDCC4',
       androidScaleType: 'CENTER_CROP',
     },
   },

@@ -1,4 +1,3 @@
-import '@fontsource-variable/inter';
 import { render } from 'preact';
 import { App } from './App.tsx';
 import { files } from './lib/filestore.ts';

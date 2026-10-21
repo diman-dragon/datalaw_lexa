@@ -90,8 +90,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Pillow (иконки и заставка)
-        run: pip install pillow
+      - name: Pillow + numpy (иконки и заставка)
+        run: pip install pillow numpy
       - name: Dictionary URL (branch "dictionary" of this repository)
         run: echo "VITE_DATA_URL=https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/dictionary/" >> "$GITHUB_ENV"
       - name: Install

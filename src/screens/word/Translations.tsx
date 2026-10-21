@@ -1,14 +1,14 @@
 import { Chip } from '../../components/ui.tsx';
 import { markLabel, posLabel, t } from '../../i18n.ts';
-import { LOCALE, speak } from '../../lib/speech.ts';
+import { LOCALE } from '../../lib/speech.ts';
+import { say } from '../../speakUi.ts';
 import type { Entry } from '../../lib/types.ts';
-import { showToast } from '../../store.ts';
 
 export function Translations({ entry }: { entry: Entry | null }) {
   const groups = entry?.tr ?? [];
 
   const hear = (text: string) => {
-    speak(text, LOCALE.ru).catch(() => showToast(t('toastNoVoice')));
+    void say(text, LOCALE.ru);
   };
 
   if (groups.length === 0) {

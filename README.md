@@ -75,3 +75,9 @@ npm run android:open     # открыть в Android Studio
 - Слова без русского перевода в Викисловаре показываются без него (машинного перевода офлайн нет).
 - Предложения Tatoeba привязываются к однословным ключам; фразы («ice cream») примеров-предложений не получают.
 - Озвучке нужны установленные в системе голоса.
+
+
+## Оформление, иконка, озвучка
+- **Оформление** общее с другими приложениями DataLaw DesignLab (см. `datalaw_forma`): токены цветов в начале `src/styles/app.css`.
+- **Иконка:** `python3 scripts/make-icons.py` (Pillow + numpy) строит знак из `resources/logo-source.png` («D» DataLaw DesignLab) + книга; `scripts/android_icons.py` подставляет её в проект Android (в CI делает `release-apk.sh`).
+- **Озвучка** — системный синтезатор Android. Нативный плагин `scripts/android/LexaSpeechPlugin.java`, `scripts/android-patch.mjs` кладёт его в `android/` и добавляет в манифест `<queries>` для TTS (без этого Android 11+ «не видит» установленный синтезатор). Если голоса нужного языка нет — приложение скажет, где его поставить (Настройки Android → Синтез речи).

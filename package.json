@@ -1,6 +1,6 @@
 {
   "name": "datalaw_lexa",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "type": "module",
   "description": "datalaw_lexa — офлайн англо-русский словарь для Android (Capacitor + Preact + Vite)",
@@ -19,7 +19,7 @@
     "data:build": "python3 scripts/build_data.py --download --require-wordfreq",
     "assets": "python3 scripts/android_icons.py",
     "cap:add": "cap add android",
-    "cap:sync": "npm run build && cap sync android",
+    "cap:sync": "npm run build && cap sync android && node scripts/android-patch.mjs",
     "android:open": "npm run cap:sync && cap open android",
     "android:run": "npm run cap:sync && cap run android",
     "android:release": "bash scripts/release-apk.sh",
@@ -34,7 +34,6 @@
     "@capacitor/share": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
-    "@fontsource-variable/inter": "^5.2.0",
     "preact": "^10.26.0"
   },
   "devDependencies": {
