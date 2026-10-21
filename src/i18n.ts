@@ -194,7 +194,7 @@ const ru: Record<StringKey, string> = {
   toastCopied: 'Скопировано',
   toastNoVoice: 'Нет голоса для этого языка. Установите: Настройки Android → Система → Язык → Синтез речи',
   toastNoEngine: 'Синтезатор речи не найден. Установите или включите его: Настройки Android → Синтез речи',
-  toastSpeechFailed: 'Не удалось воспроизвести. Попробуйте ещё раз'
+  toastSpeechFailed: 'Не удалось воспроизвести. Попробуйте ещё раз',
   share: 'Поделиться',
   back: 'Назад',
   sectionSynonyms: 'Синонимы',
