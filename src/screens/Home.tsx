@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon, LogoMark } from '../components/Icon.tsx';
+import { closeVoice, openVoice } from '../components/VoiceSheet.tsx';
 import { Chip, ErrorBox, Skeleton } from '../components/ui.tsx';
 import { useDebounced, useResource } from '../hooks.ts';
 import { t } from '../i18n.ts';
@@ -7,13 +8,15 @@ import { getEntry, loadEnIndex, loadRuIndex } from '../lib/data.ts';
 import { packInfo } from '../lib/pack.ts';
 import { DataUnavailableError } from '../lib/source.ts';
 import { WORDS_OF_THE_DAY, firstDefinition, ipaFor, topTranslations, wordOfTheDay } from '../lib/entry.ts';
-import { indexOfWord, prefixSearch } from '../lib/search.ts';
+import { hasWord, indexOfWord, prefixSearch } from '../lib/search.ts';
 import type { Hit } from '../lib/search.ts';
 import { detectScript, normalizeEn, normalizeRu } from '../lib/text.ts';
+import { cleanAlternatives, hasVoice, pickAlternative } from '../lib/voice.ts';
+import type { VoiceLang } from '../lib/voice.ts';
 import { tap } from '../native.ts';
 import { openSettingsPage } from './Settings.tsx';
 import { navigate, openWord } from '../router.ts';
-import { history, settings, updateSettings, useStore } from '../store.ts';
+import { history, settings, showToast, updateSettings, useStore } from '../store.ts';
 
 function WordOfTheDay() {
   const s = useStore(settings);
@@ -101,6 +104,26 @@ export function HomeScreen() {
     }
   };
 
+  const voiceOn = hasVoice();
+  // окно живёт в корне приложения и вызывает обработчик с актуальными данными индексов
+  const onVoice = useRef<(alts: string[], lang: VoiceLang) => void>(() => undefined);
+  useEffect(() => closeVoice, []); // уходим с экрана — окно закрываем
+
+  /** Результат голосового ввода: слово из словаря открываем сразу, иначе кладём в строку поиска с подсказками. */
+  onVoice.current = (alts: string[], lang: VoiceLang) => {
+    const ix = lang === 'ru' ? ruIx.data : enIx.data;
+    const pick = pickAlternative(cleanAlternatives(alts, lang), (k) => (ix ? hasWord(ix, k) : false));
+    if (!pick) {
+      showToast(t('voiceErrNoSpeech'));
+      return;
+    }
+    setText(pick.text);
+    if (pick.exact) {
+      if (lang === 'ru') navigate({ name: 'find', query: pick.text });
+      else openWord(pick.text);
+    }
+  };
+
   const failed = enIx.status === 'error' ? enIx : ruIx.status === 'error' ? ruIx : null;
   const retry = () => {
     if (enIx.status === 'error') enIx.reload();
@@ -127,7 +150,7 @@ export function HomeScreen() {
         <h1 class="hero__title">{t('homeHeadline')}</h1>
         <p class="hero__sub">{t('homeSub')}</p>
 
-        <form class="search" onSubmit={submit} role="search">
+        <form class={`search${voiceOn ? ' search--voice' : ''}${text ? ' has-text' : ''}`} onSubmit={submit} role="search">
           <Icon name="search" size={20} class="search__icon" />
           <input
             class="search__input"
@@ -145,6 +168,19 @@ export function HomeScreen() {
           {text ? (
             <button type="button" class="search__clear" onClick={() => setText('')} aria-label={t('searchClear')}>
               <Icon name="close" size={18} />
+            </button>
+          ) : null}
+          {voiceOn ? (
+            <button
+              type="button"
+              class="search__mic"
+              onClick={() => {
+                tap();
+                openVoice((alts, lang) => onVoice.current(alts, lang));
+              }}
+              aria-label={t('voiceMic')}
+            >
+              <Icon name="mic" size={22} />
             </button>
           ) : null}
         </form>

@@ -1,8 +1,8 @@
 # datalaw_lexa — англо-русский словарь для Android (онлайн + офлайн по кнопке)
 
-Capacitor 8 · Preact · TypeScript · Vite. Версия **0.0.1** (дальше +1 в последнем знаке: `npm run bump`).
+Capacitor 8 · Preact · TypeScript · Vite. Версия **0.0.5** (дальше +1 в последнем знаке: `npm run bump`; журнал — `CHANGELOG.md`).
 
-Весь словарь вшит в приложение — интернет не нужен.
+Словарь работает онлайн (файлы читаются «на лету» и кэшируются), а после загрузки в настройках — полностью офлайн.
 
 > Oxford и Cambridge — проприетарные, встроить их в приложение нельзя. Данные собираются из открытых источников.
 
@@ -52,7 +52,7 @@ npm install
 npm run data:sample      # или data:build
 npm run check            # типы + TS-тесты + тесты пайплайна данных
 npm run dev              # http://localhost:5173
-npm run android:release  # → release/datalaw_lexa-0.0.1.apk (подписанный)
+npm run android:release  # → release/datalaw_lexa-<версия>.apk (подписанный)
 npm run android:open     # открыть в Android Studio
 ```
 
@@ -64,7 +64,7 @@ npm run android:open     # открыть в Android Studio
 
 ## Интерфейс
 
-- Поиск EN и RU с подсказками, слово дня, история, «Мои слова»
+- Поиск EN и RU с подсказками, **голосовой ввод** (кнопка микрофона), слово дня, история, «Мои слова»
 - Карточка слова: значения, перевод по значениям, тезаурус, примеры (словарь + Tatoeba), IPA US/UK, частотность
 - **Настройки — отдельный экран** (шестерёнка на главной): тема (Авто / Светло-коричневая / AMOLED), язык интерфейса RU/EN, акцент, вибро, сведения о данных
 - Строки интерфейса — `src/i18n.ts`
@@ -80,4 +80,5 @@ npm run android:open     # открыть в Android Studio
 ## Оформление, иконка, озвучка
 - **Оформление** общее с другими приложениями DataLaw DesignLab (см. `datalaw_forma`): токены цветов в начале `src/styles/app.css`.
 - **Иконка:** `python3 scripts/make-icons.py` (Pillow + numpy) строит знак из `resources/logo-source.png` («D» DataLaw DesignLab) + книга; `scripts/android_icons.py` подставляет её в проект Android (в CI делает `release-apk.sh`).
+- **Голосовой ввод** — системная служба распознавания речи Android (`android.speech.SpeechRecognizer`). Нативный плагин `scripts/android/LexaVoicePlugin.java`; `scripts/android-patch.mjs` добавляет в манифест разрешение `RECORD_AUDIO` и `<queries>` для `android.speech.RecognitionService` (без них Android 11+ «не видит» службу). Нужен Google (Речевые службы) или другой распознаватель; для работы без сети — офлайн-пакет языка (Настройки Android → Google → Речь). В браузере используется Web Speech API (Chrome/Edge/Safari). Ядро — `src/lib/voice.ts`, окно — `src/components/VoiceSheet.tsx`.
 - **Озвучка** — системный синтезатор Android. Нативный плагин `scripts/android/LexaSpeechPlugin.java`, `scripts/android-patch.mjs` кладёт его в `android/` и добавляет в манифест `<queries>` для TTS (без этого Android 11+ «не видит» установленный синтезатор). Если голоса нужного языка нет — приложение скажет, где его поставить (Настройки Android → Синтез речи).

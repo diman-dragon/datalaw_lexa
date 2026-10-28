@@ -1,7 +1,9 @@
+const encoder = new TextEncoder();
+
 /** FNV-1a 32 бит по UTF-8 — обязан совпадать с fnv1a() в scripts/build_data.py. */
 export function fnv1a(text: string): number {
   let h = 0x811c9dc5;
-  for (const byte of new TextEncoder().encode(text)) {
+  for (const byte of encoder.encode(text)) {
     h ^= byte;
     h = Math.imul(h, 0x01000193) >>> 0;
   }

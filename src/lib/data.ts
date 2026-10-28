@@ -76,10 +76,8 @@ export async function getReverse(key: string): Promise<string[]> {
 }
 
 export async function getSentences(key: string): Promise<SentencePair[]> {
-  try {
-    const s = await shard<SentencePair[]>('s', key);
-    return s[key] ?? [];
-  } catch {
-    return []; // примеры — не критичны: без сети просто не показываем
-  }
+  // Ошибку не глотаем: пустой результат useResource запомнил бы до конца сессии,
+  // и после появления сети примеры бы так и не появились.
+  const s = await shard<SentencePair[]>('s', key);
+  return s[key] ?? [];
 }

@@ -7,11 +7,19 @@ import { hydrateStores } from './store.ts';
 import './styles/app.css';
 
 async function boot() {
-  initNative();
+  try {
+    initNative();
+  } catch (e) {
+    // нативные плагины необязательны для работы словаря — не блокируем запуск
+    console.error('initNative failed', e);
+  }
   // Настройки нужны до первой отрисовки (язык интерфейса, тема)
   await hydrateStores().catch(() => undefined);
   const root = document.getElementById('app');
-  if (!root) throw new Error('#app not found');
+  if (!root) {
+    hideSplash();
+    throw new Error('#app not found');
+  }
   render(<App />, root);
   requestAnimationFrame(hideSplash);
   // кэш «на лету» не раздуваем: оставляем последние файлы

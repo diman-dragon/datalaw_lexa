@@ -9,7 +9,7 @@ export interface Store<T> {
   subscribe(fn: () => void): () => void;
 }
 
-function createStore<T>(initial: T, onChange?: (value: T) => void): Store<T> {
+export function createStore<T>(initial: T, onChange?: (value: T) => void): Store<T> {
   let value = initial;
   const listeners = new Set<() => void>();
   return {
@@ -62,6 +62,7 @@ function persisted<T>(key: string, initial: T, revive: (raw: unknown) => T) {
 export type ThemeMode = 'auto' | 'light' | 'amoled';
 export type UiLang = 'ru' | 'en';
 export type AccentPref = 'us' | 'uk';
+export type VoiceLangPref = 'en' | 'ru';
 
 export interface Settings {
   theme: ThemeMode;
@@ -71,6 +72,8 @@ export interface Settings {
   haptics: boolean;
   /** Показывать карточку «скачайте словарь для офлайна» на главном */
   offlineHint: boolean;
+  /** Язык голосового ввода (запоминается между запусками) */
+  voiceLang: VoiceLangPref;
 }
 
 function defaultSettings(): Settings {
@@ -81,6 +84,7 @@ function defaultSettings(): Settings {
     accent: nav === 'en-gb' ? 'uk' : 'us',
     haptics: true,
     offlineHint: true,
+    voiceLang: 'en',
   };
 }
 
@@ -94,6 +98,7 @@ function reviveSettings(raw: unknown): Settings {
     accent: r.accent === 'uk' || r.accent === 'us' ? r.accent : base.accent,
     haptics: typeof r.haptics === 'boolean' ? r.haptics : base.haptics,
     offlineHint: typeof r.offlineHint === 'boolean' ? r.offlineHint : base.offlineHint,
+    voiceLang: r.voiceLang === 'ru' || r.voiceLang === 'en' ? r.voiceLang : base.voiceLang,
   };
 }
 

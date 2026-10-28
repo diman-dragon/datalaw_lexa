@@ -8,6 +8,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(LexaSpeechPlugin.class);
+        registerPlugin(LexaVoicePlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

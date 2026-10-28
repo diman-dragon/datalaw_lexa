@@ -22,7 +22,9 @@ export type IconName =
   | 'arrow-right'
   | 'palette'
   | 'data'
-  | 'book';
+  | 'book'
+  | 'mic'
+  | 'stop';
 
 const PATHS: Record<IconName, ComponentChildren> = {
   search: (
@@ -112,6 +114,13 @@ const PATHS: Record<IconName, ComponentChildren> = {
     </>
   ),
   book: <path d="M5 4.5h10a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h10" />,
+  mic: (
+    <>
+      <rect x="9" y="3.2" width="6" height="11.6" rx="3" />
+      <path d="M5.6 11.4a6.4 6.4 0 0 0 12.8 0M12 17.8v3" />
+    </>
+  ),
+  stop: <rect x="7" y="7" width="10" height="10" rx="2.6" />,
 };
 
 interface IconProps {

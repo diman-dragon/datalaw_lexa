@@ -5,18 +5,37 @@ import { Share } from '@capacitor/share';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { setNativeSpeech } from './lib/speech.ts';
+import { setNativeVoice } from './lib/voice.ts';
 import { navigate, parseHash, tabOf } from './router.ts';
 import type { NativeSpeech } from './lib/speech.ts';
+import type { NativeVoice } from './lib/voice.ts';
 import { settings } from './store.ts';
 
 export const isNative = Capacitor.isNativePlatform();
+
+/** Окна поверх экрана (голосовой ввод) перехватывают системную «Назад»: закрывают себя, а не уходят с экрана. */
+const backHandlers: Array<() => void> = [];
+export function pushBackHandler(fn: () => void): () => void {
+  backHandlers.push(fn);
+  return () => {
+    const i = backHandlers.lastIndexOf(fn);
+    if (i >= 0) backHandlers.splice(i, 1);
+  };
+}
 
 /** Системная кнопка «Назад» Android: шаг назад по маршрутам, на главной — выход. */
 export function initNative(): void {
   if (!isNative) return;
   // нативный синтезатор речи (scripts/android/LexaSpeechPlugin.java)
   setNativeSpeech(registerPlugin<NativeSpeech>('LexaSpeech'));
+  // нативное распознавание речи (scripts/android/LexaVoicePlugin.java)
+  setNativeVoice(registerPlugin<NativeVoice>('LexaVoice'));
   void CapApp.addListener('backButton', () => {
+    const top = backHandlers[backHandlers.length - 1];
+    if (top) {
+      top();
+      return;
+    }
     const route = parseHash(location.hash);
     if (route.name === 'home') {
       void CapApp.exitApp(); // «Поиск» — корень: назад закрывает приложение

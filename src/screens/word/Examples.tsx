@@ -25,6 +25,7 @@ export function Examples({ word, entry }: { word: string; entry: Entry | null })
   };
 
   const nothing = fromDict.length === 0 && sentences.status === 'ready' && pairs.length === 0;
+  const failed = sentences.status === 'error';
 
   return (
     <div>
@@ -72,6 +73,15 @@ export function Examples({ word, entry }: { word: string; entry: Entry | null })
           </ul>
           <p class="src">{t('exSource')}</p>
         </section>
+      ) : null}
+
+      {failed ? (
+        <p class="muted block">
+          {t('exLoadFailed')}{' '}
+          <button type="button" class="link-btn" onClick={sentences.reload}>
+            {t('retry')}
+          </button>
+        </p>
       ) : null}
 
       {nothing ? <p class="muted block">{t('exNone')}</p> : null}

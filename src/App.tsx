@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Icon } from './components/Icon.tsx';
+import { VoiceHost } from './components/VoiceSheet.tsx';
 import type { IconName } from './components/Icon.tsx';
 import { t } from './i18n.ts';
 import { syncStatusBar, tap } from './native.ts';
@@ -139,6 +140,8 @@ export function App() {
           </button>
         ))}
       </nav>
+
+      <VoiceHost />
     </div>
   );
 }

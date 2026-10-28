@@ -25,14 +25,14 @@ export function Translations({ entry }: { entry: Entry | null }) {
             {g.g ? <span lang="en">{g.g}</span> : null}
           </div>
           <div class="chips">
-            {g.t.map((term) => {
+            {g.t.map((term, k) => {
               const text = typeof term === 'string' ? term : term.w;
               const sub =
                 typeof term === 'string'
                   ? undefined
                   : [term.r, term.x ? markLabel(term.x) : undefined].filter(Boolean).join(' · ') || undefined;
               return (
-                <Chip key={text} tone="teal" lang="ru" sub={sub} onClick={() => hear(text)}>
+                <Chip key={`${text}:${k}`} tone="teal" lang="ru" sub={sub} onClick={() => hear(text)}>
                   {text}
                 </Chip>
               );
