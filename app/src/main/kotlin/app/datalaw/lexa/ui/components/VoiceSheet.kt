@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -73,6 +74,7 @@ private fun errorText(e: VoiceError): Str = when (e) {
  * реагирующими на громкость голоса, и бегущей строкой распознанного слова.
  * onResult — варианты распознавания (лучший первым) и признак «говорили по-русски».
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoiceSheet(onClose: () -> Unit, onResult: (alternatives: List<String>, russian: Boolean) -> Unit) {
     val c = L.c
