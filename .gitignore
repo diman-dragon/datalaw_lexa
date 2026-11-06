@@ -1,25 +1,18 @@
-node_modules/
-dist/
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+.kotlin/
 release/
 .data-cache/
 *.log
 .DS_Store
+__pycache__/
 
-# Собранный словарь (десятки МБ) — генерируется: npm run data:build; образец: npm run data:sample
+# Собранный словарь (десятки МБ) — генерируется: python3 scripts/build_data.py --download
 public/data/*
 !public/data/.gitkeep
 
-# Android: папку android/ рекомендуется коммитить; игнорируем только артефакты сборки
-android/.gradle/
-android/build/
-android/app/build/
-android/app/src/main/assets/public/
-android/app/src/main/assets/capacitor.config.json
-android/app/src/main/assets/capacitor.plugins.json
-android/capacitor-cordova-android-plugins/
-android/local.properties
-android/.idea/
-*.iml
-
 # ВАЖНО: signing/datalaw_lexa.keystore КОММИТИТСЯ (публичный ключ, см. README)
-__pycache__/
