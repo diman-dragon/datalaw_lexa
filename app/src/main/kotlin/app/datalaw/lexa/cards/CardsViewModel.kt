@@ -8,7 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.datalaw.lexa.LexaApp
+import app.datalaw.lexa.store.AccentPref
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -16,6 +18,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 
 /**
  * Состояние экрана «Карточки»: очередь слов, их перевод, существующая колода и экспорт.
@@ -38,6 +41,11 @@ class CardsViewModel : ViewModel() {
 
     private var job: Job? = null
     private var nextId = 1L
+
+    private companion object {
+        val SIMPLE_WORD = Regex("[a-z]+")
+        val SKIP_POS = setOf("proper noun", "abbreviation", "initialism", "acronym", "contraction", "symbol", "letter", "prefix", "suffix")
+    }
 
     /* ───────── Список слов ───────── */
 
@@ -70,6 +78,59 @@ class CardsViewModel : ViewModel() {
         if (i >= 0) items[i] = transform(items[i])
     }
 
+    /* ───────── Самые частотные слова ───────── */
+
+    var picking by mutableStateOf(false)
+        private set
+
+    /**
+     * Берёт из словаря [count] самых частотных слов (по оценке Zipf), пропуская формы слов («ran»), имена,
+     * сокращения и слова без русского перевода, добавляет их в список и сразу переводит. [onDone] — сколько добавлено.
+     */
+    fun addFrequent(count: Int, onDone: (Int) -> Unit) {
+        if (picking || running) return
+        picking = true
+        viewModelScope.launch {
+            var added = 0
+            try {
+                val words = pickFrequent(count)
+                added = addWords(words)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // нет сети и нет пакета — просто ничего не добавляем
+            } finally {
+                picking = false
+            }
+            onDone(added)
+            if (added > 0) translate()
+        }
+    }
+
+    private suspend fun pickFrequent(count: Int): List<String> {
+        val ix = app.dictionary.enIndex()
+        val order = withContext(Dispatchers.Default) {
+            (0 until ix.size)
+                .filter { ix.score[it] > 0 && SIMPLE_WORD.matches(ix.words[it]) }
+                .sortedWith(compareByDescending<Int> { ix.score[it] }.thenBy { ix.words[it] })
+                .take((count * 3).coerceIn(count, 6000))
+                .map { ix.words[it] }
+        }
+        val have = items.map { CardLogic.dedupKey(it.input) }.toHashSet()
+        val out = ArrayList<String>()
+        for (chunk in order.chunked(24)) {
+            if (out.size >= count) break
+            val entries = coroutineScope { chunk.map { w -> async { w to app.dictionary.getEntry(w) } }.awaitAll() }
+            for ((w, e) in entries) {
+                if (out.size >= count) break
+                if (e == null || e.isForm || e.tr.isEmpty() || CardLogic.dedupKey(w) in have) continue
+                if (e.m.firstOrNull()?.t?.lowercase() in SKIP_POS) continue
+                out.add(w)
+            }
+        }
+        return out
+    }
+
     /* ───────── Перевод ───────── */
 
     /** Переводит все ожидающие слова и те, что не удалось прочитать в прошлый раз. */
@@ -78,7 +139,7 @@ class CardsViewModel : ViewModel() {
         val todo = items.filter { it.status == CardStatus.QUEUED || it.status == CardStatus.ERROR }.map { it.id }
         if (todo.isEmpty()) return
         val s = app.store.settings
-        val opts = GenOptions(addTo = s.cardsAddTo, maxTranslations = s.cardsMaxTr)
+        val opts = GenOptions(addTo = s.cardsAddTo, maxTranslations = s.cardsMaxTr, accent = if (s.accent == AccentPref.UK) "uk" else "us")
         running = true
         done = 0
         total = todo.size
@@ -117,6 +178,7 @@ class CardsViewModel : ViewModel() {
                 status = result.status,
                 front = result.front,
                 back = result.back,
+                hint = result.hint,
                 example = first?.en.orEmpty(),
                 exampleTranslation = first?.ru.orEmpty(),
                 alternatives = result.alternatives,
@@ -143,11 +205,12 @@ class CardsViewModel : ViewModel() {
         it.copy(altIndex = n, example = a.en, exampleTranslation = a.ru)
     }
 
-    fun edit(id: Long, front: String, back: String, example: String, exampleTranslation: String) {
+    fun edit(id: Long, front: String, back: String, hint: String, example: String, exampleTranslation: String) {
         update(id) {
             it.copy(
                 front = front.trim(),
                 back = back.trim(),
+                hint = hint.trim(),
                 example = example.trim(),
                 exampleTranslation = exampleTranslation.trim(),
                 status = if (back.isBlank() || front.isBlank()) CardStatus.NO_TRANSLATION else CardStatus.READY,
@@ -158,7 +221,7 @@ class CardsViewModel : ViewModel() {
 
     /* ───────── Существующая колода ───────── */
 
-    /** false — файл не похож на колоду flashcards-deck. */
+    /** false — файл не похож на колоду DL Studio. */
     fun loadBase(text: String): Boolean {
         val parsed = DeckIo.parse(text) ?: return false
         base = parsed

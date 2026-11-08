@@ -1,11 +1,16 @@
 package app.datalaw.lexa.cards
 
-/** Карточка колоды в формате flashcards-deck. */
+/**
+ * Карточка колоды для DL Studio: `name` — слово (озвучивается), `back` — перевод, `hint` — подсказка на лицевой стороне
+ * (лампочка: транскрипция, часть речи, определение), `explanation` — пояснение под переводом (здесь — перевод примера),
+ * `example` — английский пример (озвучивается).
+ */
 data class DeckCard(
     val front: String,
     val back: String,
+    val hint: String,
+    val explanation: String,
     val example: String,
-    val exampleTranslation: String,
 )
 
 /** Пример: английское предложение и его перевод (перевода может не быть). */
@@ -39,6 +44,7 @@ data class CardItem(
     val status: CardStatus = CardStatus.QUEUED,
     val front: String = input,
     val back: String = "",
+    val hint: String = "",
     val example: String = "",
     val exampleTranslation: String = "",
     val alternatives: List<ExamplePair> = emptyList(),
@@ -56,5 +62,5 @@ data class CardItem(
     val needsAttention: Boolean
         get() = status == CardStatus.NOT_FOUND || status == CardStatus.NO_TRANSLATION || status == CardStatus.ERROR
 
-    fun toCard() = DeckCard(front, back, example, exampleTranslation)
+    fun toCard() = DeckCard(front, back, hint, exampleTranslation, example)
 }

@@ -22,16 +22,20 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.datalaw.lexa.LexaApp
+import app.datalaw.lexa.ui.components.FitText
 import app.datalaw.lexa.ui.components.ToastHost
+import app.datalaw.lexa.ui.components.rememberFitGroup
 import app.datalaw.lexa.ui.components.rememberTap
 import app.datalaw.lexa.ui.i18n.Str
 import app.datalaw.lexa.ui.i18n.t
@@ -71,6 +75,8 @@ fun LexaRoot() {
             bottomBar = {
                 // с клавиатурой нижняя панель только мешает
                 if (!WindowInsets.isImeVisible) {
+                    // один кегль на все подписи: ряд ровный, слова не переносятся
+                    val labels = rememberFitGroup(12.sp, store.settings.uiLang)
                     NavigationBar(containerColor = c.surface) {
                         for (tab in TABS) {
                             val on = nav.activeTab == tab.route
@@ -81,7 +87,18 @@ fun LexaRoot() {
                                     nav.tab(tab.route)
                                 },
                                 icon = { Icon(if (on) tab.activeIcon else tab.icon, contentDescription = null) },
-                                label = { Text(t(tab.label), maxLines = 1) },
+                                alwaysShowLabel = true,
+                                label = {
+                                    FitText(
+                                        t(tab.label),
+                                        modifier = Modifier.padding(horizontal = 2.dp),
+                                        fontSize = 12.sp,
+                                        fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium,
+                                        textAlign = TextAlign.Center,
+                                        minSize = 9.sp,
+                                        group = labels,
+                                    )
+                                },
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = c.accentInk, selectedTextColor = c.accent,
                                     indicatorColor = c.accent, unselectedIconColor = c.ink3, unselectedTextColor = c.ink3,

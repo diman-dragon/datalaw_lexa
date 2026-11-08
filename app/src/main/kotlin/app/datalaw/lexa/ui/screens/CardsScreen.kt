@@ -75,6 +75,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private val FREQ_STEPS = listOf(100, 300, 600, 1000)
+
 @Composable
 private fun fieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = L.c.surface, unfocusedContainerColor = L.c.surface,
@@ -91,6 +93,7 @@ private fun EditDialog(item: CardItem, vm: CardsViewModel, onClose: () -> Unit) 
     val c = L.c
     var front by remember { mutableStateOf(item.front) }
     var back by remember { mutableStateOf(item.back) }
+    var hint by remember { mutableStateOf(item.hint) }
     var ex by remember { mutableStateOf(item.example) }
     var exTr by remember { mutableStateOf(item.exampleTranslation) }
     AlertDialog(
@@ -101,13 +104,14 @@ private fun EditDialog(item: CardItem, vm: CardsViewModel, onClose: () -> Unit) 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(front, { front = it }, label = { Text(t(Str.cardsFront)) }, modifier = Modifier.fillMaxWidth(), colors = fieldColors())
                 OutlinedTextField(back, { back = it }, label = { Text(t(Str.cardsBack)) }, modifier = Modifier.fillMaxWidth(), colors = fieldColors())
+                OutlinedTextField(hint, { hint = it }, label = { Text(t(Str.cardsHint)) }, modifier = Modifier.fillMaxWidth(), colors = fieldColors())
                 OutlinedTextField(ex, { ex = it }, label = { Text(t(Str.cardsExample)) }, modifier = Modifier.fillMaxWidth(), colors = fieldColors())
                 OutlinedTextField(exTr, { exTr = it }, label = { Text(t(Str.cardsExampleTr)) }, modifier = Modifier.fillMaxWidth(), colors = fieldColors())
             }
         },
         confirmButton = {
             TextButton({
-                vm.edit(item.id, front, back, ex, exTr)
+                vm.edit(item.id, front, back, hint, ex, exTr)
                 onClose()
             }) { Text(t(Str.cardsSave), color = c.accent) }
         },
@@ -147,6 +151,7 @@ private fun CardRow(item: CardItem, vm: CardsViewModel, onEdit: () -> Unit) {
 
         if (item.hasData || item.status == CardStatus.NO_TRANSLATION) {
             if (item.back.isNotEmpty()) Text(item.back, color = c.accent, fontSize = 16.sp, modifier = Modifier.padding(top = 6.dp))
+            if (item.hint.isNotEmpty()) Text(item.hint.lineSequence().first(), color = c.ink3, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
             if (item.example.isNotEmpty()) {
                 Text(item.example, color = c.ink2, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
                 if (item.exampleTranslation.isNotEmpty()) Text(item.exampleTranslation, color = c.ink3, fontSize = 13.sp)
@@ -186,6 +191,7 @@ fun CardsScreen() {
     val s = store.settings
 
     var input by rememberSaveable { mutableStateOf("") }
+    var freqN by rememberSaveable { mutableStateOf(600) }
     var editing by remember { mutableStateOf<CardItem?>(null) }
     var confirmClear by remember { mutableStateOf(false) }
     var pendingJson by remember { mutableStateOf<String?>(null) }
@@ -280,6 +286,25 @@ fun CardsScreen() {
                     PrimaryButton(t(Str.cardsAdd), { tap(false); addFromText(input) }, Modifier.weight(1f), Icons.Rounded.Add, enabled = input.isNotBlank())
                     GhostButton(t(Str.cardsLoadFile), { pickList.launch(arrayOf("text/*", "application/json", "*/*")) }, Modifier.weight(1f), Icons.Rounded.UploadFile)
                 }
+            }
+        }
+
+        /* Самые частотные слова */
+        item {
+            Spacer(Modifier.height(10.dp))
+            LexaCard {
+                Text(t(Str.cardsFreqTitle), style = MaterialTheme.typography.titleMedium, color = c.ink)
+                Text(t(Str.cardsFreqHint), color = c.ink3, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
+                Segmented(FREQ_STEPS.map { it to it.toString() }, freqN, { freqN = it }, Modifier.fillMaxWidth(), fill = true)
+                Spacer(Modifier.height(10.dp))
+                PrimaryButton(
+                    if (vm.picking) t(Str.cardsFreqBusy) else t(Str.cardsFreqTake, "n" to freqN),
+                    {
+                        tap(true)
+                        vm.addFrequent(freqN) { n -> store.showToast(if (n > 0) t(Str.cardsAddedN, "n" to n) else t(Str.cardsFreqNone)) }
+                    },
+                    Modifier.fillMaxWidth(), Icons.Rounded.Add, enabled = !vm.picking && !vm.running,
+                )
             }
         }
 

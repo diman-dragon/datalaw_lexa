@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -64,6 +65,7 @@ import app.datalaw.lexa.data.DataUnavailableException
 import app.datalaw.lexa.ui.i18n.Str
 import app.datalaw.lexa.ui.i18n.t
 import app.datalaw.lexa.ui.theme.L
+import app.datalaw.lexa.ui.theme.Serif
 import kotlinx.coroutines.delay
 
 /** Тактильный отклик с учётом настройки «Вибро-отклик». true — плотнее. */
@@ -125,12 +127,14 @@ fun Header(title: String, onBack: (() -> Unit)? = null, actions: @Composable Row
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) IconBtn(Icons.AutoMirrored.Rounded.ArrowBack, t(Str.back), onBack)
-        Text(
+        FitText(
             title,
-            style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-            color = L.c.ink,
             modifier = Modifier.weight(1f).padding(horizontal = if (onBack != null) 4.dp else 0.dp),
-            maxLines = 1,
+            color = L.c.ink,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = Serif,
+            minSize = 15.sp,
         )
         actions()
     }
@@ -150,8 +154,8 @@ fun Chip(text: String, modifier: Modifier = Modifier, tone: ChipTone = ChipTone.
     }
     val body: @Composable () -> Unit = {
         Row(Modifier.padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(text, color = fg, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            if (sub != null) Text(sub, color = c.ink3, fontSize = 11.sp, modifier = Modifier.padding(start = 6.dp))
+            FitText(text, color = fg, fontSize = 14.sp, fontWeight = FontWeight.Medium, minSize = 11.sp)
+            if (sub != null) FitText(sub, color = c.ink3, fontSize = 11.sp, minSize = 9.sp, modifier = Modifier.padding(start = 6.dp))
         }
     }
     if (onClick != null) {
@@ -203,7 +207,7 @@ fun <T> Segmented(
                     .padding(horizontal = 14.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(label, color = if (on) c.accentInk else c.ink2, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+                FitText(label, color = if (on) c.accentInk else c.ink2, fontSize = 14.sp, fontWeight = FontWeight.Medium, minSize = 10.sp, textAlign = TextAlign.Center)
             }
         }
     }
@@ -219,11 +223,12 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
         modifier = modifier.height(48.dp),
         enabled = enabled,
         shape = RoundedCornerShape(14.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp),
         colors = ButtonDefaults.buttonColors(containerColor = c.accent, contentColor = c.accentInk, disabledContainerColor = c.surface2, disabledContentColor = c.ink3),
     ) {
         if (icon != null) Icon(icon, null, Modifier.size(18.dp).padding(end = 0.dp))
         if (icon != null) Spacer(Modifier.size(8.dp))
-        Text(text, fontWeight = FontWeight.SemiBold)
+        FitText(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, minSize = 11.sp)
     }
 }
 
@@ -237,17 +242,20 @@ fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
         enabled = enabled,
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(1.dp, c.line),
+        contentPadding = PaddingValues(horizontal = 14.dp),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = fg, disabledContentColor = c.ink3),
     ) {
         if (icon != null) Icon(icon, null, Modifier.size(18.dp))
         if (icon != null) Spacer(Modifier.size(8.dp))
-        Text(text, fontWeight = FontWeight.Medium)
+        FitText(text, fontSize = 16.sp, fontWeight = FontWeight.Medium, minSize = 11.sp)
     }
 }
 
 @Composable
 fun LinkButton(text: String, onClick: () -> Unit) {
-    TextButton(onClick = onClick) { Text(text, color = L.c.accent) }
+    TextButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 12.dp)) {
+        FitText(text, color = L.c.accent, fontSize = 14.sp, fontWeight = FontWeight.Medium, minSize = 11.sp)
+    }
 }
 
 /* ───────────── Состояния ───────────── */
@@ -304,7 +312,7 @@ fun Skeleton(lines: Int = 3) {
 
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(text.uppercase(), color = L.c.ink3, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp, modifier = modifier.padding(top = 18.dp, bottom = 8.dp))
+    FitText(text.uppercase(), color = L.c.ink3, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp, minSize = 9.sp, modifier = modifier.padding(top = 18.dp, bottom = 8.dp))
 }
 
 @Composable
@@ -319,7 +327,7 @@ fun LogoMark(size: Int = 30) {
 
 @Composable
 fun Eyebrow(text: String) {
-    Text(text.uppercase(), color = L.c.accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+    FitText(text.uppercase(), color = L.c.accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, minSize = 8.sp)
 }
 
 /** Подсветка слова (и его форм с окончаниями) в предложении. */

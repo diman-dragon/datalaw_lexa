@@ -5,12 +5,15 @@ import app.datalaw.lexa.core.EntryUtil
 import app.datalaw.lexa.core.Search
 import app.datalaw.lexa.core.Text
 import app.datalaw.lexa.data.DictionarySource
+import app.datalaw.lexa.ui.i18n.posLabelRu
 
 data class GenOptions(
     /** добавлять «to» перед глаголами: «suggest» → «to suggest» */
     val addTo: Boolean = true,
     /** сколько переводов класть на оборот */
     val maxTranslations: Int = 3,
+    /** произношение для транскрипции в подсказке: "us" или "uk" */
+    val accent: String = "us",
 )
 
 /** Результат разбора одного слова. */
@@ -18,6 +21,7 @@ data class GenResult(
     val status: CardStatus,
     val front: String,
     val back: String = "",
+    val hint: String = "",
     val alternatives: List<ExamplePair> = emptyList(),
     val via: String? = null,
     val suggestions: List<String> = emptyList(),
@@ -75,6 +79,23 @@ object CardLogic {
             .sortedBy { penalty(it.length) }
             .map { ExamplePair(it, "") }
         return (ranked + fromDict).distinctBy { it.en }.take(limit + 2)
+    }
+
+    /**
+     * Подсказка для лицевой стороны: «/транскрипция/ · часть речи» и со второй строки короткое английское
+     * определение. Перевода в ней нет — она помогает вспомнить слово, а не выдаёт ответ.
+     */
+    fun hint(entry: Entry, verb: Boolean, accent: String, maxDef: Int = 80): String {
+        val meaning = (if (verb) entry.m.firstOrNull { it.t.equals("verb", ignoreCase = true) } else null) ?: entry.m.firstOrNull()
+        val head = listOfNotNull(
+            EntryUtil.ipaFor(entry, accent)?.takeIf { it.isNotBlank() },
+            meaning?.t?.takeIf { it.isNotBlank() }?.let(::posLabelRu),
+        ).joinToString(" · ")
+        val def = meaning?.s?.firstOrNull()?.d?.trim()?.let { d ->
+            val one = d.lineSequence().first().trim().trimEnd('.', ':', ';')
+            if (one.length > maxDef) one.take(maxDef - 1).trimEnd() + "…" else one
+        }.orEmpty()
+        return listOf(head, def).filter { it.isNotEmpty() }.joinToString("\n")
     }
 
     fun dictionaryExamples(entry: Entry): List<String> =
@@ -146,6 +167,7 @@ class CardGenerator(private val dict: DictionarySource) {
             status = if (back.isBlank()) CardStatus.NO_TRANSLATION else CardStatus.READY,
             front = front,
             back = back,
+            hint = CardLogic.hint(entry, verb = stripped || front.startsWith("to "), accent = opts.accent),
             alternatives = examples,
             via = via,
         )

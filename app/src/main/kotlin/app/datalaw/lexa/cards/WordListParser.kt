@@ -16,7 +16,8 @@ object WordListParser {
     private val SPLIT = Regex("[\\r\\n;]+")
     private val LIST_MARK = Regex("^\\s*(?:[-*•–—]|\\d+[.)])\\s+")
     private val HEADERS = setOf("word", "words", "front", "english", "term", "en", "слово", "английский")
-    private val JSON_KEYS = listOf("front", "word", "en", "english", "term")
+    private val JSON_KEYS = listOf("front", "word", "en", "english", "term", "name")
+    private val CHILD_KEYS = listOf("items", "decks", "cards", "words")
 
     private fun clean(line: String): String? {
         var s = line.replace("\uFEFF", "").trim()
@@ -63,12 +64,13 @@ object WordListParser {
             is JsonPrimitive -> e.contentOrNull?.let(::clean)?.let(out::add)
             is JsonArray -> e.forEach { fromJson(it, out) }
             is JsonObject -> {
-                val key = JSON_KEYS.firstOrNull { e[it] is JsonPrimitive }
-                if (key != null) {
-                    (e[key] as JsonPrimitive).contentOrNull?.let(::clean)?.let(out::add)
+                // колода или проект DL Studio: {"name": …, "items": […]} — берём слова карточек, а не названия
+                val children = CHILD_KEYS.firstNotNullOfOrNull { e[it] as? JsonArray }
+                if (children != null) {
+                    fromJson(children, out)
                 } else {
-                    // колода: {"cards": [...]} или {"words": [...]}
-                    (e["cards"] ?: e["words"])?.let { fromJson(it, out) }
+                    val key = JSON_KEYS.firstOrNull { e[it] is JsonPrimitive }
+                    if (key != null) (e[key] as JsonPrimitive).contentOrNull?.let(::clean)?.let(out::add)
                 }
             }
         }

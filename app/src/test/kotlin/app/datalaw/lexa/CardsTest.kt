@@ -9,6 +9,7 @@ import app.datalaw.lexa.cards.GenOptions
 import app.datalaw.lexa.cards.WordListParser
 import app.datalaw.lexa.core.Entry
 import app.datalaw.lexa.core.Meaning
+import app.datalaw.lexa.core.Pron
 import app.datalaw.lexa.core.Sense
 import app.datalaw.lexa.core.SentencePair
 import app.datalaw.lexa.core.TrGroup
@@ -129,6 +130,31 @@ class CardsTest {
         assertEquals("I suggest a walk.", ex.single().en)
     }
 
+    @Test
+    fun hintHasTranscriptionPartOfSpeechAndShortDefinition() {
+        val e = Entry(
+            "suggest", 50, p = listOf(Pron("/səˈdʒɛst/", "us"), Pron("/səˈdʒest/", "uk")),
+            m = listOf(Meaning("verb", listOf(Sense("To propose a plan."))), Meaning("noun", listOf(Sense("A thing.")))),
+        )
+        assertEquals("/səˈdʒɛst/ · глагол\nTo propose a plan", CardLogic.hint(e, verb = true, accent = "us"))
+        assertEquals("/səˈdʒest/ · глагол\nTo propose a plan", CardLogic.hint(e, verb = true, accent = "uk"))
+    }
+
+    @Test
+    fun hintTrimsLongDefinitionAndSurvivesMissingData() {
+        val long = "x".repeat(200)
+        val e = Entry("w", 40, m = listOf(Meaning("noun", listOf(Sense(long)))))
+        val lines = CardLogic.hint(e, verb = false, accent = "us").lines()
+        assertEquals("существительное", lines[0])
+        assertTrue(lines[1].length <= 80 && lines[1].endsWith("…"))
+        assertEquals("", CardLogic.hint(Entry("w"), verb = false, accent = "us"))
+    }
+
+    @Test
+    fun generatedCardCarriesHint() {
+        assertEquals("глагол\nTo propose", generate("suggest").hint)
+    }
+
     /* ───── список слов ───── */
 
     @Test
@@ -146,48 +172,81 @@ class CardsTest {
     @Test
     fun parsesJsonArraysAndDecks() {
         assertEquals(listOf("a", "b"), WordListParser.parseFile("w.json", """["a","b","A"]"""))
-        assertEquals(listOf("to suggest"), WordListParser.parseFile("d.json", """{"format":"flashcards-deck","cards":[{"front":"to suggest","back":"x"}]}"""))
+        assertEquals(listOf("to suggest"), WordListParser.parseFile("d.json", """{"cards":[{"front":"to suggest","back":"x"}]}"""))
     }
 
-    /* ───── формат колоды ───── */
+    /* ───── формат колоды (DL Studio) ───── */
 
-    private val cards = listOf(DeckCard("to suggest", "предлагать", "She suggested it.", "Она предложила это."))
+    private val cards = listOf(
+        DeckCard("to suggest", "предлагать", "/səˈdʒɛst/ · глагол\nTo put forward", "Она предложила это.", "She suggested it."),
+    )
 
     @Test
-    fun createsDeckInTheSameFormat() {
+    fun parsesDlStudioDecksAsWordLists() {
+        val deck = """{"name":"Английский","items":[{"name":"B1","items":[{"name":"to give up","back":"сдаться"},{"name":"apple","back":"яблоко"}]}]}"""
+        assertEquals(listOf("to give up", "apple"), WordListParser.parseFile("d.json", deck))
+    }
+
+    @Test
+    fun createsProjectDeckCardsTree() {
         val text = DeckIo.create("Моя колода", cards)
-        val o = Json.parseToJsonElement(text) as JsonObject
-        assertEquals(listOf("format", "version", "language", "deck", "cards"), o.keys.toList())
-        assertEquals("flashcards-deck", o["format"]!!.jsonPrimitive.content)
-        assertEquals("1", o["version"]!!.jsonPrimitive.content)
-        val card = (o["cards"] as JsonArray)[0] as JsonObject
-        assertEquals(listOf("front", "back", "example", "example_translation"), card.keys.toList())
+        val project = Json.parseToJsonElement(text) as JsonObject
+        assertEquals(listOf("name", "items"), project.keys.toList())
+        assertEquals("Английский", project["name"]!!.jsonPrimitive.content)
+        val deck = (project["items"] as JsonArray)[0] as JsonObject
+        assertEquals("Моя колода", deck["name"]!!.jsonPrimitive.content)
+        val card = (deck["items"] as JsonArray)[0] as JsonObject
+        assertEquals(listOf("name", "back", "hint", "explanation", "example"), card.keys.toList())
+        assertEquals("to suggest", card["name"]!!.jsonPrimitive.content)
+        assertEquals("She suggested it.", card["example"]!!.jsonPrimitive.content)
         assertTrue(text.contains("\"name\": \"Английский\"")) // кириллица не экранируется, отступ 2 пробела
-        assertTrue(text.contains("\n  \"format\""))
     }
 
     @Test
-    fun mergeKeepsExistingContentAndAppends() {
-        val base = """{"format":"flashcards-deck","version":1,"language":{"name":"Английский","tts":"en-US"},
-            "deck":{"name":"Старая","extra":true},"cards":[{"front":"to bring up","back":"затронуть","example":"e","example_translation":"p","tag":"x"}],"custom":5}"""
+    fun emptyCardFieldsAreNotWritten() {
+        val text = DeckIo.create("D", listOf(DeckCard("cat", "кот", "", "", "")))
+        assertFalse(text.contains("\"hint\""))
+        assertFalse(text.contains("\"example\""))
+        assertFalse(text.contains("\"explanation\""))
+    }
+
+    @Test
+    fun mergeAppendsToTheFirstDeckAndKeepsEverythingElse() {
+        val base = """{"name":"Проект","tag":1,"items":[
+            {"name":"Старая","extra":true,"items":[{"name":"to bring up","back":"затронуть","mark":"x"}]},
+            {"name":"Другая","items":[{"name":"dog","back":"собака"}]}]}"""
         val b = DeckIo.parse(base)
         assertNotNull(b)
-        assertEquals(1, b!!.cardCount)
+        assertEquals("Старая", b!!.name)
+        assertEquals(1, b.cardCount)
         assertTrue("bring up" in b.keys)
+        assertTrue("dog" in b.keys) // дубликаты ищем по всему файлу
         val merged = Json.parseToJsonElement(DeckIo.merge(b, "Новая", cards)) as JsonObject
-        assertEquals("5", merged["custom"]!!.jsonPrimitive.content)
-        assertEquals("Новая", ((merged["deck"] as JsonObject)["name"]!!).jsonPrimitive.content)
-        assertEquals("true", ((merged["deck"] as JsonObject)["extra"]!!).jsonPrimitive.content)
-        val list = merged["cards"] as JsonArray
+        assertEquals("1", merged["tag"]!!.jsonPrimitive.content)
+        val decks = merged["items"] as JsonArray
+        assertEquals(2, decks.size)
+        val first = decks[0] as JsonObject
+        assertEquals("Новая", first["name"]!!.jsonPrimitive.content)
+        assertEquals("true", first["extra"]!!.jsonPrimitive.content)
+        val list = first["items"] as JsonArray
         assertEquals(2, list.size)
-        assertEquals("x", ((list[0] as JsonObject)["tag"]!!).jsonPrimitive.content)
-        assertEquals("to suggest", ((list[1] as JsonObject)["front"]!!).jsonPrimitive.content)
+        assertEquals("x", ((list[0] as JsonObject)["mark"]!!).jsonPrimitive.content)
+        assertEquals("to suggest", ((list[1] as JsonObject)["name"]!!).jsonPrimitive.content)
+    }
+
+    @Test
+    fun mergeWorksOnAFlatDeckWithSynonymKeys() {
+        val b = DeckIo.parse("""{"name":"Плоская","cards":[{"front":"cat","translation":"кот"}]}""")
+        assertNotNull(b)
+        val merged = Json.parseToJsonElement(DeckIo.merge(b!!, "Плоская", cards)) as JsonObject
+        assertEquals(2, (merged["cards"] as JsonArray).size)
     }
 
     @Test
     fun rejectsForeignJson() {
-        assertNull(DeckIo.parse("""{"format":"other","cards":[]}"""))
         assertNull(DeckIo.parse("not json"))
-        assertFalse(DeckIo.parse("""{"format":"flashcards-deck","cards":[]}""") == null)
+        assertNull(DeckIo.parse("\"just a string\""))
+        assertNull(DeckIo.parse("""{"format":"flashcards-deck","cards":[{"front":"a","back":"b"}]}""")) // нет названия колоды
+        assertNull(DeckIo.parse("""{"name":"x"}"""))
     }
 }
