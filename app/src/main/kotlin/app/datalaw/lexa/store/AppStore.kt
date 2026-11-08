@@ -44,14 +44,10 @@ data class Settings(
     /** Произношение по умолчанию: IPA и голос */
     val accent: AccentPref = if (Locale.getDefault().toLanguageTag() == "en-GB") AccentPref.UK else AccentPref.US,
     val haptics: Boolean = true,
-    /** Показывать карточку «скачайте словарь для офлайна» на главном */
+    /** Показывать плашку «скачайте словарь для офлайна» на главном */
     val offlineHint: Boolean = true,
     /** Язык голосового ввода (запоминается между запусками) */
     val voiceLang: VoiceLangPref = VoiceLangPref.EN,
-    /** «Карточки»: добавлять «to» перед глаголами */
-    val cardsAddTo: Boolean = true,
-    /** «Карточки»: сколько переводов класть на оборот */
-    val cardsMaxTr: Int = 3,
 )
 
 @Serializable

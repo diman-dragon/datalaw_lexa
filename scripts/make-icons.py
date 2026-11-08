@@ -5,7 +5,7 @@
 что и у других приложений DataLaw (Forma: «D» + гантель).
 
 Выход:
-  assets/{icon-only,icon-foreground,icon-monochrome,icon-background,splash,splash-dark}.png  (для scripts/android_icons.py)
+  assets/{icon-only,icon-foreground,icon-monochrome,icon-background,splash,splash-dark}.png  (дальше их кладёт в ресурсы scripts/sync_icons.py)
   public/logo-mask.png        белая «D» на прозрачном (маска знака в интерфейсе)
   store/play-icon-512.png     иконка для Google Play
 
@@ -125,7 +125,7 @@ def main() -> None:
 
     for name, bg in (("splash.png", SPLASH_LIGHT), ("splash-dark.png", (0, 0, 0))):
         sp = Image.new("RGBA", (2732, 2732), bg + (255,))
-        sp.alpha_composite(mark(2732, 0.30, "color" if bg == (0, 0, 0) else "color"))
+        sp.alpha_composite(mark(2732, 0.30, "color"))
         sp.save(out / name)
 
     # в интерфейсе знак — маска, цвет задаёт тема

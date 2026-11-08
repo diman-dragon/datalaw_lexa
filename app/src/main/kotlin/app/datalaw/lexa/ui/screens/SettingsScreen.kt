@@ -258,7 +258,7 @@ private fun PageData() {
                     }
                 }) { Text(t(Str.dataRemove), color = c.danger) }
             },
-            dismissButton = { TextButton({ confirmRemove = false }) { Text(t(Str.cardsCancel)) } },
+            dismissButton = { TextButton({ confirmRemove = false }) { Text(t(Str.cancel)) } },
             containerColor = c.surface,
         )
     }

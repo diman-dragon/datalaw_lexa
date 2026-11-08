@@ -16,21 +16,14 @@ object EntryUtil {
         return if (d.length > max) d.take(max - 1) + "…" else d
     }
 
-    /**
-     * Самые частые переводы — по одному из каждого значения, без повторов.
-     * preferPos — если задано и есть группы этой части речи, берём только их.
-     */
-    fun topTranslations(groups: List<TrGroup>, limit: Int = 4, preferPos: String? = null): List<String> {
-        val pool = preferPos
-            ?.let { pos -> groups.filter { it.pos.equals(pos, ignoreCase = true) } }
-            ?.takeIf { it.isNotEmpty() }
-            ?: groups
+    /** Самые частые переводы — по одному из каждого значения, без повторов. */
+    fun topTranslations(groups: List<TrGroup>, limit: Int = 4): List<String> {
         val seen = HashSet<String>()
         val out = ArrayList<String>()
-        val rounds = pool.maxOfOrNull { it.t.size } ?: 0
+        val rounds = groups.maxOfOrNull { it.t.size } ?: 0
         for (i in 0 until rounds) {
             if (out.size >= limit) break
-            for (g in pool) {
+            for (g in groups) {
                 val term = g.t.getOrNull(i) ?: continue
                 val text = term.w.trim()
                 if (text.isEmpty() || !seen.add(text.lowercase())) continue

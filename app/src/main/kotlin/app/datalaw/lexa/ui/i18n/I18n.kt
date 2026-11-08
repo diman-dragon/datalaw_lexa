@@ -35,9 +35,6 @@ private val POS_RU = mapOf(
     "verb phrase" to "глагольная фраза", "adverbial phrase" to "наречный оборот",
 )
 
-/** Часть речи по-русски — для файлов колод, которые не зависят от языка интерфейса. */
-fun posLabelRu(pos: String): String = POS_RU[pos.lowercase()] ?: pos.lowercase()
-
 fun posLabel(pos: String): String {
     val key = pos.lowercase()
     return if (isRu) POS_RU[key] ?: key else key

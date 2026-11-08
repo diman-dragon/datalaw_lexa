@@ -12,7 +12,7 @@ import build_data as b  # noqa: E402
 
 class Helpers(unittest.TestCase):
     def test_fnv1a_golden(self) -> None:
-        # те же значения проверяются в tests/hash.test.ts — шардирование обязано совпадать
+        # те же значения проверяются в CoreTest.kt — шардирование обязано совпадать
         self.assertEqual(b.fnv1a(""), 2166136261)
         self.assertEqual(b.fnv1a("hello"), 1335831723)
         self.assertEqual(b.fnv1a("café"), 2821410889)

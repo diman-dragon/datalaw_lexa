@@ -13,14 +13,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
-/** То, что нужно потребителям от словаря (и что подменяется в тестах). */
-interface DictionarySource {
-    suspend fun getEntry(key: String): Entry?
-    suspend fun getReverse(key: String): List<String>
-    suspend fun getSentences(key: String): List<SentencePair>
-    suspend fun enIndex(): WordIndex
-}
-
 /**
  * Доступ к словарю: скачанный пакет → кэш → сервер.
  * Недоступность данных (нет сети и нет пакета) — DataUnavailableException; «слова нет» — null/пустой результат.
@@ -28,7 +20,7 @@ interface DictionarySource {
 class Dictionary(
     private val files: FileStore,
     private val dataUrl: String = Config.DATA_URL,
-) : DictionarySource {
+) {
     /** Читает файл словаря: пакет → кэш → сеть (с записью в кэш). null — такого файла нет. */
     suspend fun readFile(path: String): String? {
         files.get(Area.PACK, path)?.let { return it }
@@ -62,14 +54,14 @@ class Dictionary(
     suspend fun loadMeta(): Meta? = json("meta.json")?.let(EntryParse::meta)
 
     /** Статья по ключу (нормализованное английское слово). */
-    override suspend fun getEntry(key: String): Entry? =
+    suspend fun getEntry(key: String): Entry? =
         (shard("e", key)[key] as? JsonObject)?.let(EntryParse::entry)
 
     /** Английские слова для русского термина (ключ — normalizeRu). */
-    override suspend fun getReverse(key: String): List<String> = EntryParse.reverse(shard("r", key)[key])
+    suspend fun getReverse(key: String): List<String> = EntryParse.reverse(shard("r", key)[key])
 
     /** Ошибку не глотаем: пустой результат был бы принят за «примеров нет». */
-    override suspend fun getSentences(key: String): List<SentencePair> = EntryParse.sentences(shard("s", key)[key])
+    suspend fun getSentences(key: String): List<SentencePair> = EntryParse.sentences(shard("s", key)[key])
 
     private val indexLock = Mutex()
     private var enIx: WordIndex? = null
@@ -80,7 +72,7 @@ class Dictionary(
         return withContext(Dispatchers.Default) { WordIndex.parse(text) }
     }
 
-    override suspend fun enIndex(): WordIndex = indexLock.withLock { enIx ?: index("words.txt").also { enIx = it } }
+    suspend fun enIndex(): WordIndex = indexLock.withLock { enIx ?: index("words.txt").also { enIx = it } }
 
     suspend fun ruIndex(): WordIndex = indexLock.withLock { ruIx ?: index("rwords.txt").also { ruIx = it } }
 

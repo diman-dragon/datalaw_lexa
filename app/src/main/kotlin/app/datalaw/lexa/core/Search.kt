@@ -67,7 +67,7 @@ object Search {
         if (prefix.isEmpty()) return emptyList()
         val found = ArrayList<Int>()
         var i = ix.lowerBound(prefix)
-        while (i < ix.size && found.size < 600) {
+        while (i < ix.size) {
             if (!ix.words[i].startsWith(prefix)) break
             found.add(i)
             i++

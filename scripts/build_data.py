@@ -7,7 +7,7 @@
   * wordfreq: частотность (Zipf) — выбор слов и ранжирование подсказок.  CC BY-SA
   * Tatoeba: пары предложений EN↔RU для примеров.  CC BY 2.0 FR
 
-Выход — шардированные JSON в public/data (грузятся приложением через fetch из ресурсов APK):
+Выход — шардированные JSON в public/data (CI публикует их в ветку `dictionary`; приложение читает файлы по сети или из скачанного пакета):
   meta.json          сведения о сборке
   manifest.json      список файлов и размеров (для загрузки «в офлайн» из приложения)
   words.txt          «слово \\t zipf*10» (отсортирован) — поиск по префиксу и исправление опечаток
@@ -62,7 +62,7 @@ TATOEBA_LINKS = "https://downloads.tatoeba.org/exports/links.tar.bz2"
 
 
 def fnv1a(text: str) -> int:
-    """FNV-1a 32 бит по UTF-8 — должен совпадать с src/lib/hash.ts."""
+    """FNV-1a 32 бит по UTF-8 — должен совпадать с core/Hash.kt в приложении."""
     h = 0x811C9DC5
     for b in text.encode("utf-8"):
         h ^= b
@@ -155,7 +155,7 @@ def make_zipf(required: bool) -> tuple[Callable[[str], float], bool]:
 
 # ───────────────────────── Разбор статей Wiktionary ─────────────────────────
 
-KEY_RE = re.compile(r"^[a-zà-ÿ][a-zà-ÿ' .\-]{0,39}$")
+KEY_RE = re.compile(r"^[a-zà-öø-ÿ][a-zà-öø-ÿ' .\-]{0,39}$")
 CYR_RE = re.compile(r"[Ѐ-ӿ]")
 
 ACCENT_TAGS = {
@@ -577,7 +577,7 @@ def iter_links(path: Path) -> Iterator[tuple[str, str]]:
                 yield a[0], a[1]
 
 
-TOKEN_RE = re.compile(r"[a-zà-ÿ]+(?:'[a-z]+)?")
+TOKEN_RE = re.compile(r"[a-zà-öø-ÿ]+(?:'[a-z]+)?")
 SUFFIXES = ("s", "es", "ed", "d", "ing", "er", "est", "ly")
 
 
